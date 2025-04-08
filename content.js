@@ -42,7 +42,7 @@ function insertTextAtEnd(el, text) {
 
     // Notify EdStem that content changed
     const inputEvent = new InputEvent("input", { bubbles: true });
-    el.dispatchEvent(inputEvent);
+    paragraph.dispatchEvent(inputEvent);
 }
 
 // Helper method that gets the existing text inside of the provided element
@@ -157,3 +157,19 @@ const observer = new MutationObserver((mutations) => {
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
+
+// Extra styling for the menu
+const style = document.createElement('style');
+style.textContent = `
+  .deduction-menu div:hover {
+    background-color: #f0f0f0;
+  }
+  .deduction-menu div:focus {
+    outline: none;
+    background-color: #e0e0e0;
+  }
+  .deduction-menu {
+    cursor: default;
+  }
+`;
+document.head.appendChild(style);
