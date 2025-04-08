@@ -30,17 +30,26 @@ function handleBlur(event) {
 // Helper method that inserts text at the end of the provided element 
 // - Params: only takes in TARGET element 
 function insertTextAtEnd(el, text) {
-    // Find the first editable paragraph inside the comment editor
     const paragraph = el.querySelector('.am-view-paragraphNode');
 
-    // Focus the parent container so EdStem registers the edit
-    el.focus();
+    if (!paragraph) return;
 
-    // Create and insert text
-    const textNode = document.createTextNode(text);
-    paragraph.appendChild(textNode);
+    // Focus so EdStem activates its editor
+    paragraph.focus();
 
-    // Notify EdStem that content changed
+    // Move cursor to the end
+    const range = document.createRange();
+    range.selectNodeContents(paragraph);
+    range.collapse(false); // Move to end
+
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    // Insert text at cursor [deprecated]
+    document.execCommand('insertText', false, text);
+
+    // Dispatch input event on the actual paragraph
     const inputEvent = new InputEvent("input", { bubbles: true });
     paragraph.dispatchEvent(inputEvent);
 }
