@@ -1,15 +1,17 @@
-const TARGET = '.am-view-branchNode.am-view-documentNode';
+const TARGET = '.feedback-comment-input';
 
 console.log("Content script loaded");
 
 // Activates target of event
 function handleInteraction(event) {
+    console.log("Handling interaction");
     const el = event.currentTarget;
     showDeductionsMenu(el);
 }
 
 // Deactivates target of event
 function handleBlur(event) {
+    console.log("Handling blur");
     const previousTarget = event.currentTarget;
   
     setTimeout(() => {
@@ -30,7 +32,7 @@ function handleBlur(event) {
 // Helper method that inserts text at the end of the provided element 
 // - Params: only takes in TARGET element 
 function insertTextAtEnd(el, text) {
-    const paragraph = el.querySelector('.am-view-paragraphNode');
+    const paragraph = el;
 
     if (!paragraph) return;
 
@@ -52,11 +54,12 @@ function insertTextAtEnd(el, text) {
     // Dispatch input event on the actual paragraph
     const inputEvent = new InputEvent("input", { bubbles: true });
     paragraph.dispatchEvent(inputEvent);
+    
 }
 
 // Helper method that gets the existing text inside of the provided element
 function getExistingText(el) {
-    const paragraph = el.querySelector('.am-view-paragraphNode');
+    const paragraph = el;
 
     if (!paragraph || !paragraph.isContentEditable) return '';
 
@@ -64,58 +67,59 @@ function getExistingText(el) {
 }
   
 
-function showDeductionsMenu(targetEl) {
-    removeExistingMenu(); // Remove any previous menu
+function showDeductionsMenu(el) {
+  const existing = el.querySelector('.deduction-menu');
+  if(existing) return;
 
-    const menu = document.createElement("div");
-    menu.className = "deduction-menu";
-    menu.tabIndex = -1;
+  const paragraphEl = el.querySelector('.am-view-paragraphNode');
+  const menu = document.createElement("div");
+  
+  menu.className = "deduction-menu";
+  menu.tabIndex = -1;
 
-    const commonDeductions = [
-        "Missing method comment",
-        "Incorrect loop condition",
-        "Off-by-one error",
-        "Hardcoded value instead of variable",
-        "Improper exception handling",
-    ];
+  const commonDeductions = [
+      "Missing method comment",
+      "Incorrect loop condition",
+      "Off-by-one error",
+      "Hardcoded value instead of variable",
+      "Improper exception handling",
+  ];
 
-    commonDeductions.forEach(text => {
-        const item = document.createElement("div");
-        item.textContent = text;
-        item.tabIndex = 0;
-        item.style.padding = "6px 10px";
-        item.style.cursor = "pointer";
-        item.style.borderBottom = "1px solid #eee";
+  commonDeductions.forEach(text => {
+      const item = document.createElement("div");
+      item.textContent = text;
+      item.tabIndex = 0;
+      item.style.padding = "6px 10px";
+      item.style.cursor = "pointer";
+      item.style.borderBottom = "1px solid #eee";
 
-        item.addEventListener("mousedown", () => {
-            insertTextAtEnd(targetEl, text)
-            //removeExistingMenu();
-        });
+      item.addEventListener("mousedown", () => {
+          insertTextAtEnd(paragraphEl, text);
+      });
 
-        menu.appendChild(item);
-    });
+      menu.appendChild(item);
+  });
 
-    // Style the menu
-    Object.assign(menu.style, {
-        position: "absolute",
-        backgroundColor: "#fff",
-        border: "1px solid #ccc",
-        borderRadius: "6px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-        fontFamily: "Arial, sans-serif",
-        fontSize: "14px",
-        maxHeight: "150px",
-        overflowY: "auto",
-        zIndex: 10000,
-    });
+  // Style the menu as inline block, not floating
+  Object.assign(menu.style, {
+      marginTop: "8px",
+      backgroundColor: "#fff",
+      border: "1px solid #ccc",
+      borderRadius: "6px",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+      fontFamily: "Arial, sans-serif",
+      fontSize: "14px",
+      maxHeight: "150px",
+      overflowY: "auto",
+      width: "100%", // or fixed like "300px"
+  });
 
-    // Position the menu
-    const rect = targetEl.getBoundingClientRect();
-    menu.style.left = `${window.scrollX + rect.left}px`;
-    menu.style.top = `${window.scrollY + rect.bottom + 4}px`;
-
-    document.body.appendChild(menu);
+  // Insert the menu after the paragraph node
+  const firstChild = el.firstElementChild;
+  firstChild.parentNode.insertBefore(menu, firstChild.nextSibling);
+  
 }
+
 
 function removeExistingMenu() {
     const old = document.querySelector(".deduction-menu");
@@ -127,29 +131,24 @@ function removeExistingMenu() {
 // Set that contains all nodes that we have already attached listeners to
 const processed = new WeakSet();
 
-// Checks if nodes match target and attatches listeners to node 
+//
 function processNode(node) {
   if (
     node.matches &&
-    node.matches(".am-view-branchNode.am-view-documentNode") &&
-    !processed.has(node)
+    node.matches(".feedback-comment-input")
   ) {
-    node.addEventListener("focus", handleInteraction);
-    node.addEventListener("input", handleInteraction);
-    node.addEventListener("blur", handleBlur);
-    processed.add(node);
-    console.log("Attached listeners to:", node);
+    const paragraph = node.querySelector(".am-view-paragraphNode");
+    if (!paragraph || !paragraph.isContentEditable || processed.has(node)) return;
 
-    // Handle case where element is already focused
-    if (document.activeElement === node) {
-      handleInteraction({ currentTarget: node });
-      console.log("Element was already focused — applied style immediately.");
-    }
+    showDeductionsMenu(node); // insert menu right away
+    processed.add(node);
+    console.log("Inserted menu into:", node);
   }
 }
 
+
 // Initial pass for any already-present elements
-document.querySelectorAll(".am-view-branchNode.am-view-documentNode").forEach(processNode);
+document.querySelectorAll(TARGET).forEach(processNode);
 
 // Watch for new elements added to the DOM
 const observer = new MutationObserver((mutations) => {
@@ -159,7 +158,7 @@ const observer = new MutationObserver((mutations) => {
         // Direct match
         processNode(node);
         // Or children that match
-        node.querySelectorAll?.(".am-view-branchNode.am-view-documentNode").forEach(processNode);
+        node.querySelectorAll?.(TARGET).forEach(processNode);
       }
     });
   }
