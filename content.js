@@ -9,13 +9,15 @@ console.log("Content script loaded");
 // - el: reference to paragraph element
 // - text: text to be inserted
 function insertTextAtEnd(el, text) {
-    const paragraph = el;
+    if (!el || !document.body.contains(el)) return;
 
-    if (!paragraph) return;
-    if (!document.body.contains(paragraph)) return; // prevents invalid range error
+    const paragraphEls = el.querySelectorAll('.am-view-paragraphNode');
+    if (!paragraphEls.length) return;
 
+    const paragraph = paragraphEls[paragraphEls.length - 1]; // last paragraph
+    if (!paragraph.isContentEditable) return;
 
-    // Focus so EdStem activates its editor
+    // Focus the paragraph
     paragraph.focus();
 
     // Move cursor to the end
@@ -35,13 +37,16 @@ function insertTextAtEnd(el, text) {
     paragraph.dispatchEvent(inputEvent);
 }
 
-// Helper method that gets the existing text inside of the provided element
-function getExistingText(el) {
-    const paragraph = el;
+function getExistingText(containerEl) {
+  const paragraphEls = containerEl.querySelectorAll('.am-view-paragraphNode');
+  console.log(paragraphEls);
+  if (!paragraphEls.length) return '';
 
-    if (!paragraph || !paragraph.isContentEditable) return '';
+  const combinedText = Array.from(paragraphEls)
+    .map(el => el.textContent.trim())
+    .join('\n') // or ' ' if you want a flat line
 
-    return paragraph.innerText.trim(); // Or .textContent if you want raw text
+  return combinedText;
 }
 
 // 
@@ -97,9 +102,9 @@ function showDeductionsMenu(el) {
       item.style.borderBottom = "1px solid #eee";
 
       item.addEventListener("mousedown", () => {
-        const existing = getExistingText(paragraphEl);
+        const existing = getExistingText(el);
         if (!existing.includes(text)) {
-          insertTextAtEnd(paragraphEl, text);
+          insertTextAtEnd(el, text);
         }
       });
 
@@ -108,14 +113,25 @@ function showDeductionsMenu(el) {
   }
 
   // 
-  function observeParagraphText(paragraphEl, onUpdate) {
-    const observer = new MutationObserver(() => {
-      const text = getExistingText(paragraphEl);
+  function observeParagraphText(el, onUpdate) {
+    //const paragraphEl = el.querySelector('.am-view-paragraphNode');
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (
+          (mutation.target.nodeType === 1 && mutation.target.closest('.deduction-menu')) ||
+          Array.from(mutation.addedNodes).some(node => node.nodeType === 1 && node.closest('.deduction-menu'))
+        ) {
+          return;
+        }        
+      }
+    
+      const text = getExistingText(el);
       const filtered = filterDeductions(text, commonDeductions);
       onUpdate(filtered);
     });
+    
 
-    observer.observe(paragraphEl, {
+    observer.observe(el, {
       childList: true,
       characterData: true,
       subtree: true
@@ -127,7 +143,7 @@ function showDeductionsMenu(el) {
   // Initial render with all deductions
   renderMenu(commonDeductions);
 
-  observeParagraphText(paragraphEl, renderMenu);
+  observeParagraphText(el, renderMenu);
 
 
   // Style the menu as inline block, not floating
