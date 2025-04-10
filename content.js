@@ -8,33 +8,34 @@ console.log("Content script loaded");
 // Params:
 // - el: reference to paragraph element
 // - text: text to be inserted
-function insertTextAtEnd(el, text) {
-    if (!el || !document.body.contains(el)) return;
+function insertTextAtEnd(containerEl, text) {
+  if (!containerEl || !document.body.contains(containerEl)) return;
 
-    const paragraphEls = el.querySelectorAll('.am-view-paragraphNode');
-    if (!paragraphEls.length) return;
+  const paragraphEls = containerEl.querySelectorAll('.am-view-paragraphNode');
+  if (!paragraphEls.length) return;
 
-    const paragraph = paragraphEls[paragraphEls.length - 1]; // last paragraph
-    if (!paragraph.isContentEditable) return;
+  const paragraph = paragraphEls[paragraphEls.length - 1];
+  if (!paragraph.isContentEditable) return;
 
-    // Focus the paragraph
-    paragraph.focus();
+  paragraph.focus();
 
-    // Move cursor to the end
+  try {
     const range = document.createRange();
     range.selectNodeContents(paragraph);
-    range.collapse(false); // Move to end
+    range.collapse(false);
 
     const sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
 
-    // Insert text at cursor [deprecated]
-    document.execCommand('insertText', false, text);
+    // Insert as "rich" HTML (but it's just Markdown-style plain text)
+    document.execCommand('insertHTML', false, text);
 
-    // Dispatch input event on the actual paragraph, letting Ed know we've made changes
     const inputEvent = new InputEvent("input", { bubbles: true });
     paragraph.dispatchEvent(inputEvent);
+  } catch (err) {
+    console.warn("Failed to insert text:", err);
+  }
 }
 
 function getExistingText(containerEl) {
@@ -61,56 +62,69 @@ function showDeductionsMenu(el) {
   menu.className = "deduction-menu";
   menu.tabIndex = -1;
 
-  const commonDeductions = [
-    "Missing method comment",
-    "Incorrect loop condition",
-    "Off-by-one error",
-    "Hardcoded value instead of variable",
-    "Improper exception handling",
-    "Wrong return value",
-    "Infinite loop",
-    "Incorrect variable initialization",
-    "Forgot to update loop variable",
-    "Incorrect method signature"
+  const deductions = [
+    {
+      code: "C0",
+      category: "Concepts",
+      headline: "Missing extension",
+      summary: "**Concepts: missing creative extension**",
+      description: `> Once you've implemented the \`composeSong\` method, it's time to enhance your program with an additional feature! **Choose one** of the following creative options to expand your \`MusicBox\` class.
+  
+  Make sure to implement either the \`mostCommonNaturals\` or \`findChord\` extension!`
+    },
+    {
+      code: "C1",
+      category: "Concepts",
+      headline: "Missing helper method (composeSong)",
+      summary: "**Concepts: poor functional decomposition**",
+      description: `Note that the spec requires \`composeSong\` to have 1 additional helper method. 
+  
+  > You should use **functional decomposition** to break down \`composeSong\` into at least one additional helper method...
+  
+  This is because \`composeSong\` does a lot of computation...`
+    },
+    // Add the rest...
   ];
 
   // Filter logic based on user-typed input
   function filterDeductions(query, options) {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return options;
-
+  
     return options
-      .map(text => ({
-        text,
-        score: text.toLowerCase().indexOf(normalized)
+      .map(item => ({
+        ...item,
+        score: (
+          item.summary + item.description + item.headline + item.category
+        ).toLowerCase().indexOf(normalized)
       }))
       .filter(item => item.score !== -1)
-      .sort((a, b) => a.score - b.score)
-      .map(item => item.text);
+      .sort((a, b) => a.score - b.score);
   }
+  
 
   // Render visible items
-  function renderMenu(filtered) {
-    menu.innerHTML = ''; // clear current
-
-    filtered.forEach(text => {
+  function renderMenu(filteredItems) {
+    menu.innerHTML = '';
+  
+    filteredItems.forEach(({ summary, description }) => {
       const item = document.createElement("div");
-      item.textContent = text;
       item.tabIndex = 0;
       item.style.padding = "6px 10px";
       item.style.cursor = "pointer";
       item.style.borderBottom = "1px solid #eee";
-
+      item.style.whiteSpace = "pre-wrap";
+  
+      item.innerHTML = `<strong>${summary}</strong><br><br>${description}`;
+  
       item.addEventListener("mousedown", () => {
-        const existing = getExistingText(el);
-        if (!existing.includes(text)) {
-          insertTextAtEnd(el, text);
-        }
+        insertTextAtEnd(el, `${summary}\n\n${description}`);
       });
-
+  
       menu.appendChild(item);
     });
   }
+  
 
   // 
   function observeParagraphText(el, onUpdate) {
@@ -126,7 +140,7 @@ function showDeductionsMenu(el) {
       }
     
       const text = getExistingText(el);
-      const filtered = filterDeductions(text, commonDeductions);
+      const filtered = filterDeductions(text, deductions);
       onUpdate(filtered);
     });
     
@@ -141,7 +155,7 @@ function showDeductionsMenu(el) {
   }
 
   // Initial render with all deductions
-  renderMenu(commonDeductions);
+  renderMenu(deductions);
 
   observeParagraphText(el, renderMenu);
 
