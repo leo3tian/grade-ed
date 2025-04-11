@@ -1,175 +1,126 @@
-// TARGET = the element we are interested in. Right now it's ".feedback-comment-input" because 
-// all Ed inline comment boxes have this tag.
+// Constants
 const TARGET = '.feedback-comment-input';
+const processed = new WeakSet();
 
-console.log("Content script loaded");
-  
-// Helper method that inserts text into the provided paragraph element
-// Params:
-// - el: reference to paragraph element
-// - text: text to be inserted
-async function copyMarkdownToClipboard(markdown) {
+// Deduction definitions
+const DEDUCTIONS = [
+  {
+    markdown: `**Concepts: missing creative extension**\n\n> Once you've implemented the \`composeSong\` method, it's time to enhance your program with an additional feature! **Choose one** of the following creative options to expand your \`MusicBox\` class.\n\nMake sure to implement either the \`mostCommonNaturals\` or \`findChord\` extension!`
+  },
+  {
+    markdown: `**Concepts: poor functional decomposition**\n\nNote that the spec requires \`composeSong\` to have 1 additional helper method.\n\n> You should use **functional decomposition** to break down \`composeSong\` into at least one additional helper method...\n\nThis is because \`composeSong\` does a lot of computation...`
+  }
+];
+
+// Clipboard helper
+async function copyToClipboard(markdown) {
   try {
     await navigator.clipboard.writeText(markdown);
     alert("Copied! Now press Ctrl+Shift+V to paste into EdStem.");
   } catch (err) {
-    alert("Clipboard copy failed. Please copy manually:\n\n" + markdown);
+    alert("Clipboard copy failed:\n\n" + markdown);
   }
 }
 
-function showDeductionsMenu(containerEl) {
-  const existing = containerEl.querySelector('.deduction-menu');
-  if (existing) return;
+// Filtering and rendering combined
+function renderFilteredMenu(menu, query) {
+  const normalized = query.trim().toLowerCase();
 
-  const paragraphEl = containerEl.querySelector('.am-view-paragraphNode');
-  if (!paragraphEl) return;
+  const filteredItems = normalized ?
+    DEDUCTIONS
+      .map(item => ({...item, score: item.markdown.toLowerCase().indexOf(normalized)}))
+      .filter(item => item.score !== -1)
+      .sort((a, b) => a.score - b.score)
+    : DEDUCTIONS;
+
+  menu.innerHTML = '';
+
+  filteredItems.forEach(item => {
+    const menuItem = document.createElement("div");
+    menuItem.className = "menu-item";
+    menuItem.innerHTML = `<strong>${item.markdown.split('\n')[0]}</strong>`;
+    menuItem.addEventListener("mousedown", () => copyToClipboard(item.markdown));
+    menu.appendChild(menuItem);
+  });
+}
+
+// Menu setup and observation combined
+function setupDeductionsMenu(containerEl) {
+  if (containerEl.querySelector('.deduction-menu')) return;
 
   const menu = document.createElement("div");
   menu.className = "deduction-menu";
-  menu.tabIndex = -1;
+  containerEl.firstElementChild.after(menu);
 
-  const deductions = [
-    {
-      markdown: `**Concepts: missing creative extension**\n\n> Once you've implemented the \`composeSong\` method, it's time to enhance your program with an additional feature! **Choose one** of the following creative options to expand your \`MusicBox\` class.\n\nMake sure to implement either the \`mostCommonNaturals\` or \`findChord\` extension!`
-    },
-    {
-      markdown: `**Concepts: poor functional decomposition**\n\nNote that the spec requires \`composeSong\` to have 1 additional helper method.\n\n> You should use **functional decomposition** to break down \`composeSong\` into at least one additional helper method...\n\nThis is because \`composeSong\` does a lot of computation...`
+  const updateMenu = () => {
+    const query = Array.from(containerEl.querySelectorAll('.am-view-paragraphNode'))
+      .map(p => p.textContent.trim()).join(' ');
+    renderFilteredMenu(menu, query);
+  };
+
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.target.closest('.deduction-menu')) return;
     }
-  ];
-
-  function filterDeductions(query, options) {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return options;
-
-    return options
-      .map(item => ({
-        ...item,
-        score: item.markdown.toLowerCase().indexOf(normalized)
-      }))
-      .filter(item => item.score !== -1)
-      .sort((a, b) => a.score - b.score);
-  }
-
-  function renderMenu(filteredItems) {
-    menu.innerHTML = '';
-
-    filteredItems.forEach(({ markdown }) => {
-      const item = document.createElement("div");
-      item.tabIndex = 0;
-      item.style.padding = "6px 10px";
-      item.style.cursor = "pointer";
-      item.style.borderBottom = "1px solid #eee";
-      item.style.whiteSpace = "pre-wrap";
-
-      const firstLine = markdown.split('\n')[0];
-      item.innerHTML = `<strong>${firstLine}</strong>`;
-
-      item.addEventListener("mousedown", () => {
-        copyMarkdownToClipboard(markdown);
-      });
-
-      menu.appendChild(item);
-    });
-  }
-
-  function observeParagraphText(el, onUpdate) {
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        if (
-          (mutation.target.nodeType === 1 && mutation.target.closest('.deduction-menu')) ||
-          Array.from(mutation.addedNodes).some(node => node.nodeType === 1 && node.closest('.deduction-menu'))
-        ) {
-          return;
-        }
-      }
-
-      const text = Array.from(el.querySelectorAll('.am-view-paragraphNode'))
-        .map(p => p.textContent.trim())
-        .join(' ');
-      const filtered = filterDeductions(text, deductions);
-      onUpdate(filtered);
-    });
-
-    observer.observe(el, {
-      childList: true,
-      characterData: true,
-      subtree: true
-    });
-
-    return observer;
-  }
-
-  renderMenu(deductions);
-  observeParagraphText(containerEl, renderMenu);
-
-  Object.assign(menu.style, {
-    marginTop: "8px",
-    backgroundColor: "#fff",
-    border: "1px solid #ccc",
-    borderRadius: "6px",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-    fontFamily: "Arial, sans-serif",
-    fontSize: "14px",
-    height: "150px",
-    overflowY: "auto",
-    width: "100%"
+    updateMenu();
   });
 
-  const firstChild = containerEl.firstElementChild;
-  firstChild.parentNode.insertBefore(menu, firstChild.nextSibling);
+  observer.observe(containerEl, {
+    childList: true, subtree: true, characterData: true
+  });
+
+  updateMenu();
 }
 
-
-// Set that contains all nodes that we have already attached listeners to
-const processed = new WeakSet();
-
-// 
+// Process Node
 function processNode(node) {
-  if (
-    node.matches &&
-    node.matches(TARGET)
-  ) {
-    const paragraph = node.querySelector(".am-view-paragraphNode");
-    if (!paragraph || !paragraph.isContentEditable || processed.has(node)) return;
-
-    showDeductionsMenu(node); // insert menu right away
-    processed.add(node);
-    console.log("Inserted menu into:", node);
-  }
+  if (!node.matches?.(TARGET) || processed.has(node)) return;
+  setupDeductionsMenu(node);
+  processed.add(node);
 }
 
-
-// Initial pass for any already-present elements
-document.querySelectorAll(TARGET).forEach(processNode);
-
-// Watch for new elements added to the DOM
-const observer = new MutationObserver((mutations) => {
-  for (const mutation of mutations) {
-    mutation.addedNodes.forEach((node) => {
+// Initial setup
+new MutationObserver(mutations =>
+  mutations.forEach(mutation =>
+    mutation.addedNodes.forEach(node => {
       if (node.nodeType === 1) {
-        // Direct match
         processNode(node);
-        // Or children that match
         node.querySelectorAll?.(TARGET).forEach(processNode);
       }
-    });
-  }
-});
+    })
+  )
+).observe(document.body, { childList: true, subtree: true });
 
-observer.observe(document.body, { childList: true, subtree: true });
+document.querySelectorAll(TARGET).forEach(processNode);
 
-// Extra styling for the menu
+// CSS styles
 const style = document.createElement('style');
 style.textContent = `
-  .deduction-menu div:hover {
+  .deduction-menu {
+    margin-top: 8px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    height: 150px;
+    overflow-y: auto;
+    width: 100%;
+    cursor: default;
+  }
+  .menu-item {
+    padding: 6px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    white-space: pre-wrap;
+  }
+  .menu-item:hover {
     background-color: #f0f0f0;
   }
-  .deduction-menu div:focus {
+  .menu-item:focus {
     outline: none;
     background-color: #e0e0e0;
-  }
-  .deduction-menu {
-    cursor: default;
   }
 `;
 document.head.appendChild(style);
