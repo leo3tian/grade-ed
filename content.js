@@ -8,54 +8,20 @@ console.log("Content script loaded");
 // Params:
 // - el: reference to paragraph element
 // - text: text to be inserted
-function insertTextAtEnd(containerEl, text) {
-  if (!containerEl || !document.body.contains(containerEl)) return;
-
-  const paragraphEls = containerEl.querySelectorAll('.am-view-paragraphNode');
-  if (!paragraphEls.length) return;
-
-  const paragraph = paragraphEls[paragraphEls.length - 1];
-  if (!paragraph.isContentEditable) return;
-
-  paragraph.focus();
-
+async function copyMarkdownToClipboard(markdown) {
   try {
-    const range = document.createRange();
-    range.selectNodeContents(paragraph);
-    range.collapse(false);
-
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-
-    // Insert as "rich" HTML (but it's just Markdown-style plain text)
-    document.execCommand('insertHTML', false, text);
-
-    const inputEvent = new InputEvent("input", { bubbles: true });
-    paragraph.dispatchEvent(inputEvent);
+    await navigator.clipboard.writeText(markdown);
+    alert("Copied! Now press Ctrl+Shift+V to paste into EdStem.");
   } catch (err) {
-    console.warn("Failed to insert text:", err);
+    alert("Clipboard copy failed. Please copy manually:\n\n" + markdown);
   }
 }
 
-function getExistingText(containerEl) {
-  const paragraphEls = containerEl.querySelectorAll('.am-view-paragraphNode');
-  console.log(paragraphEls);
-  if (!paragraphEls.length) return '';
-
-  const combinedText = Array.from(paragraphEls)
-    .map(el => el.textContent.trim())
-    .join('\n') // or ' ' if you want a flat line
-
-  return combinedText;
-}
-
-// 
-function showDeductionsMenu(el) {
-  const existing = el.querySelector('.deduction-menu');
+function showDeductionsMenu(containerEl) {
+  const existing = containerEl.querySelector('.deduction-menu');
   if (existing) return;
 
-  const paragraphEl = el.querySelector('.am-view-paragraphNode');
+  const paragraphEl = containerEl.querySelector('.am-view-paragraphNode');
   if (!paragraphEl) return;
 
   const menu = document.createElement("div");
@@ -64,71 +30,49 @@ function showDeductionsMenu(el) {
 
   const deductions = [
     {
-      code: "C0",
-      category: "Concepts",
-      headline: "Missing extension",
-      summary: "**Concepts: missing creative extension**",
-      description: `> Once you've implemented the \`composeSong\` method, it's time to enhance your program with an additional feature! **Choose one** of the following creative options to expand your \`MusicBox\` class.
-  
-  Make sure to implement either the \`mostCommonNaturals\` or \`findChord\` extension!`
+      markdown: `**Concepts: missing creative extension**\n\n> Once you've implemented the \`composeSong\` method, it's time to enhance your program with an additional feature! **Choose one** of the following creative options to expand your \`MusicBox\` class.\n\nMake sure to implement either the \`mostCommonNaturals\` or \`findChord\` extension!`
     },
     {
-      code: "C1",
-      category: "Concepts",
-      headline: "Missing helper method (composeSong)",
-      summary: "**Concepts: poor functional decomposition**",
-      description: `Note that the spec requires \`composeSong\` to have 1 additional helper method. 
-  
-  > You should use **functional decomposition** to break down \`composeSong\` into at least one additional helper method...
-  
-  This is because \`composeSong\` does a lot of computation...`
-    },
-    // Add the rest...
+      markdown: `**Concepts: poor functional decomposition**\n\nNote that the spec requires \`composeSong\` to have 1 additional helper method.\n\n> You should use **functional decomposition** to break down \`composeSong\` into at least one additional helper method...\n\nThis is because \`composeSong\` does a lot of computation...`
+    }
   ];
 
-  // Filter logic based on user-typed input
   function filterDeductions(query, options) {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return options;
-  
+
     return options
       .map(item => ({
         ...item,
-        score: (
-          item.summary + item.description + item.headline + item.category
-        ).toLowerCase().indexOf(normalized)
+        score: item.markdown.toLowerCase().indexOf(normalized)
       }))
       .filter(item => item.score !== -1)
       .sort((a, b) => a.score - b.score);
   }
-  
 
-  // Render visible items
   function renderMenu(filteredItems) {
     menu.innerHTML = '';
-  
-    filteredItems.forEach(({ summary, description }) => {
+
+    filteredItems.forEach(({ markdown }) => {
       const item = document.createElement("div");
       item.tabIndex = 0;
       item.style.padding = "6px 10px";
       item.style.cursor = "pointer";
       item.style.borderBottom = "1px solid #eee";
       item.style.whiteSpace = "pre-wrap";
-  
-      item.innerHTML = `<strong>${summary}</strong><br><br>${description}`;
-  
+
+      const firstLine = markdown.split('\n')[0];
+      item.innerHTML = `<strong>${firstLine}</strong>`;
+
       item.addEventListener("mousedown", () => {
-        insertTextAtEnd(el, `${summary}\n\n${description}`);
+        copyMarkdownToClipboard(markdown);
       });
-  
+
       menu.appendChild(item);
     });
   }
-  
 
-  // 
   function observeParagraphText(el, onUpdate) {
-    //const paragraphEl = el.querySelector('.am-view-paragraphNode');
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         if (
@@ -136,14 +80,15 @@ function showDeductionsMenu(el) {
           Array.from(mutation.addedNodes).some(node => node.nodeType === 1 && node.closest('.deduction-menu'))
         ) {
           return;
-        }        
+        }
       }
-    
-      const text = getExistingText(el);
+
+      const text = Array.from(el.querySelectorAll('.am-view-paragraphNode'))
+        .map(p => p.textContent.trim())
+        .join(' ');
       const filtered = filterDeductions(text, deductions);
       onUpdate(filtered);
     });
-    
 
     observer.observe(el, {
       childList: true,
@@ -154,13 +99,9 @@ function showDeductionsMenu(el) {
     return observer;
   }
 
-  // Initial render with all deductions
   renderMenu(deductions);
+  observeParagraphText(containerEl, renderMenu);
 
-  observeParagraphText(el, renderMenu);
-
-
-  // Style the menu as inline block, not floating
   Object.assign(menu.style, {
     marginTop: "8px",
     backgroundColor: "#fff",
@@ -171,10 +112,10 @@ function showDeductionsMenu(el) {
     fontSize: "14px",
     height: "150px",
     overflowY: "auto",
-    width: "100%",
+    width: "100%"
   });
 
-  const firstChild = el.firstElementChild;
+  const firstChild = containerEl.firstElementChild;
   firstChild.parentNode.insertBefore(menu, firstChild.nextSibling);
 }
 
