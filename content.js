@@ -16,7 +16,7 @@ const DEDUCTIONS = [
 async function copyToClipboard(markdown) {
   try {
     await navigator.clipboard.writeText(markdown);
-    alert("Copied! Now press Ctrl+Shift+V to paste into EdStem.");
+    alert("Markdown comment copied!");
   } catch (err) {
     alert("Clipboard copy failed:\n\n" + markdown);
   }
