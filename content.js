@@ -18,7 +18,7 @@ async function copyToClipboard(markdown) {
     await navigator.clipboard.writeText(markdown);
     alert("Markdown comment copied!");
   } catch (err) {
-    alert("Clipboard copy failed:\n\n" + markdown);
+    alert("Clipboard copy failed:\n" + markdown);
   }
 }
 
