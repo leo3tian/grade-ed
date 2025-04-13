@@ -1,50 +1,36 @@
 // Constants
 const TARGET = '.feedback-comment-input';
 const processed = new WeakSet();
+let DEDUCTIONS = [];
 
-// Deduction definitions
-const DEDUCTIONS = [
-  {
-    markdown: `**Concepts: missing creative extension**\n\n> Once you've implemented the \`composeSong\` method, it's time to enhance your program with an additional feature! **Choose one** of the following creative options to expand your \`MusicBox\` class.\n\nMake sure to implement either the \`mostCommonNaturals\` or \`findChord\` extension!`
-  },
-  {
-    markdown: `**Concepts: poor functional decomposition**\n\nNote that the spec requires \`composeSong\` to have 1 additional helper method.\n\n> You should use **functional decomposition** to break down \`composeSong\` into at least one additional helper method...\n\nThis is because \`composeSong\` does a lot of computation...`
+
+// Pastes markdown into ed container
+function simulatePaste(containerEl, markdown) {
+  if (!containerEl || !markdown) return;
+
+  const paragraph = containerEl.querySelector('.am-view-paragraphNode');
+  if (!paragraph || !paragraph.isContentEditable) {
+    console.warn("🛑 Could not find editable paragraph");
+    return;
   }
-];
 
-// Clipboard helper
-async function copyToClipboard(markdown) {
-  try {
-    await navigator.clipboard.writeText(markdown);
-    alert("Markdown comment copied!");
-  } catch (err) {
-    alert("Clipboard copy failed:\n" + markdown);
-  }
-}
+  // Focus to enable potential input
+  paragraph.focus();
 
-// Filtering and rendering combined
-function renderFilteredMenu(menu, query) {
-  const normalized = query.trim().toLowerCase();
+  // Attempt to create clipboard event with markdown content
+  const clipboardData = new DataTransfer();
+  clipboardData.setData("text/plain", markdown);
 
-  const filteredItems = normalized ?
-    DEDUCTIONS
-      .map(item => ({...item, score: item.markdown.toLowerCase().indexOf(normalized)}))
-      .filter(item => item.score !== -1)
-      .sort((a, b) => a.score - b.score)
-    : DEDUCTIONS;
-
-  menu.innerHTML = '';
-
-  filteredItems.forEach(item => {
-    const menuItem = document.createElement("div");
-    menuItem.className = "menu-item";
-    menuItem.innerHTML = `<strong>${item.markdown.split('\n')[0]}</strong>`;
-    menuItem.addEventListener("mousedown", () => copyToClipboard(item.markdown));
-    menu.appendChild(menuItem);
+  const pasteEvent = new ClipboardEvent("paste", {
+    clipboardData,
+    bubbles: true,
+    cancelable: true
   });
+
+  const result = paragraph.dispatchEvent(pasteEvent);
 }
 
-// Menu setup and observation combined
+// Sets up deduction menu 
 function setupDeductionsMenu(containerEl) {
   if (containerEl.querySelector('.deduction-menu')) return;
 
@@ -55,14 +41,33 @@ function setupDeductionsMenu(containerEl) {
   const updateMenu = () => {
     const query = Array.from(containerEl.querySelectorAll('.am-view-paragraphNode'))
       .map(p => p.textContent.trim()).join(' ');
-    renderFilteredMenu(menu, query);
+    const normalized = query.trim().toLowerCase();
+
+    const filteredItems = normalized ?
+      DEDUCTIONS
+        .map(text => ({text, score: text.toLowerCase().indexOf(normalized)}))
+        .filter(item => item.score !== -1)
+        .sort((a, b) => a.score - b.score)
+      : DEDUCTIONS.map(text => ({ text }));
+  
+    menu.innerHTML = '';
+  
+    filteredItems.forEach(item => {
+      const menuItem = document.createElement("div");
+      menuItem.className = "menu-item";
+      menuItem.innerHTML = `<strong>${item.text.split('\n')[0].replaceAll('**', '')}</strong>`;
+      menuItem.addEventListener("mousedown", () => simulatePaste(containerEl, item.text));
+      menu.appendChild(menuItem);
+    });
   };
 
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
-      if (mutation.target.closest('.deduction-menu')) return;
-    }
-    updateMenu();
+      if (mutation.target instanceof Element && mutation.target.closest('.deduction-menu')) {
+        return;
+      }
+      updateMenu();
+    }    
   });
 
   observer.observe(containerEl, {
@@ -72,15 +77,19 @@ function setupDeductionsMenu(containerEl) {
   updateMenu();
 }
 
-// Process Node
+// Process node (matches to TARGET)
+//  - Set up deductions menu
+//  - Add to processed set
 function processNode(node) {
   if (!node.matches?.(TARGET) || processed.has(node)) return;
   setupDeductionsMenu(node);
   processed.add(node);
 }
 
-// Initial setup
-new MutationObserver(mutations =>
+/* Initial setup */
+
+// Observer for all changes to the DOM
+const observer = new MutationObserver(mutations =>
   mutations.forEach(mutation =>
     mutation.addedNodes.forEach(node => {
       if (node.nodeType === 1) {
@@ -89,9 +98,7 @@ new MutationObserver(mutations =>
       }
     })
   )
-).observe(document.body, { childList: true, subtree: true });
-
-document.querySelectorAll(TARGET).forEach(processNode);
+);
 
 // CSS styles
 const style = document.createElement('style');
@@ -123,4 +130,15 @@ style.textContent = `
     background-color: #e0e0e0;
   }
 `;
+
+// Getting deductions
+chrome.storage.local.get({ customDeductions: [] }, (data) => {
+  DEDUCTIONS = data.customDeductions || [];
+  console.log(DEDUCTIONS);
+
+  // Once loaded, process nodes and observe DOM
+  document.querySelectorAll(TARGET).forEach(processNode);
+  observer.observe(document.body, { childList: true, subtree: true });
+});
+
 document.head.appendChild(style);
