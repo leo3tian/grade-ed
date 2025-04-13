@@ -14,7 +14,7 @@
       "default_popup": "popup.html",
       "default_icon": "icon.png"
     },
-    "permissions": [],
+    "permissions": ["storage"],
     "background": {
       "service_worker": "background.js"
     }
