@@ -3,20 +3,48 @@ const list = document.getElementById('deductionList');
 const addBtn = document.getElementById('addButton');
 
 function renderDeductions(deductions) {
+  const list = document.getElementById('deductionList');
   list.innerHTML = '';
+
   deductions.forEach((markdown, index) => {
-    const li = document.createElement('li');
-    li.textContent = markdown.split('\n')[0]; // show first line
-    const remove = document.createElement('button');
-    remove.textContent = 'Remove';
-    remove.className = 'remove-btn';
-    remove.addEventListener('click', () => {
+    const container = document.createElement('div');
+    container.className = 'deduction-container';
+
+    const headerText = markdown.split('\n')[0];
+    const bodyText = markdown.split('\n').slice(1).join('\n');
+
+    const header = document.createElement('div');
+    header.className = 'deduction-header';
+
+    const title = document.createElement('div');
+    title.className = 'deduction-title';
+    title.textContent = headerText;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = 'Remove';
+    removeBtn.className = 'remove-btn';
+    removeBtn.onclick = () => {
       deductions.splice(index, 1);
-      chrome.storage.local.set({ customDeductions: deductions });
-      renderDeductions(deductions);
+      chrome.storage.local.set({ customDeductions: deductions }, () => {
+        renderDeductions(deductions);
+      });
+    };
+
+    header.appendChild(title);
+    header.appendChild(removeBtn);
+
+    const body = document.createElement('pre');
+    body.className = 'deduction-body';
+    body.textContent = bodyText;
+    body.style.display = 'none';
+
+    container.addEventListener('click', () => {
+      body.style.display = body.style.display === 'none' ? 'block' : 'none';
     });
-    li.appendChild(remove);
-    list.appendChild(li);
+
+    container.appendChild(header);
+    container.appendChild(body);
+    list.appendChild(container);
   });
 }
 
