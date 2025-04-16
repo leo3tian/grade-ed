@@ -81,3 +81,24 @@ textarea {
 .remove-btn:hover {
     background-color: rgba(209, 67, 67, 0.1);
 }
+
+
+.import-export {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+  
+  .import-label {
+    background-color: #eee;
+    border: 1px solid #ccc;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .import-label:hover {
+    background-color: #ddd;
+  }
+  
