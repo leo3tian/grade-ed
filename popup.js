@@ -10,7 +10,7 @@ function renderDeductions(deductions) {
     const container = document.createElement('div');
     container.className = 'deduction-container';
 
-    const headerText = markdown.split('\n')[0];
+    const headerText = markdown.split('\n')[0].replaceAll('**', '');
     const bodyText = markdown.split('\n').slice(1).join('\n');
 
     const header = document.createElement('div');
@@ -38,7 +38,7 @@ function renderDeductions(deductions) {
     body.textContent = bodyText;
     body.style.display = 'none';
 
-    container.addEventListener('click', () => {
+    header.addEventListener('click', () => {
       body.style.display = body.style.display === 'none' ? 'block' : 'none';
     });
 
