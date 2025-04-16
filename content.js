@@ -1,8 +1,17 @@
-// Constants
+// TARGET is how we identify Ed feedback windows
 const TARGET = '.feedback-comment-input';
+// Set containing all
 const processed = new WeakSet();
 let DEDUCTIONS = [];
 
+function selectText(element) {
+  const range = document.createRange();
+  range.selectNodeContents(element); // or use range.setStart/setEnd for finer control
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  console.log("Selected text:", selection.toString());
+}
 
 // Pastes markdown into ed container
 function simulatePaste(containerEl, markdown) {
@@ -17,17 +26,24 @@ function simulatePaste(containerEl, markdown) {
   // Focus to enable potential input
   paragraph.focus();
 
-  // Attempt to create clipboard event with markdown content
-  const clipboardData = new DataTransfer();
-  clipboardData.setData("text/plain", markdown);
+  // Let the browser settle focus before selecting
+  requestAnimationFrame(() => {
+    selectText(paragraph);
 
-  const pasteEvent = new ClipboardEvent("paste", {
-    clipboardData,
-    bubbles: true,
-    cancelable: true
+    // Super janky but waits a sec before pasting to allow the selection to register in the browser
+    setTimeout(() => {
+      const clipboardData = new DataTransfer();
+      clipboardData.setData("text/plain", markdown);
+
+      const pasteEvent = new ClipboardEvent("paste", {
+        clipboardData,
+        bubbles: true,
+        cancelable: true
+      });
+
+      const result = paragraph.dispatchEvent(pasteEvent);
+    }, 100);
   });
-
-  const result = paragraph.dispatchEvent(pasteEvent);
 }
 
 // Sets up deduction menu 
