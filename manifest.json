@@ -6,18 +6,18 @@
     "content_scripts": [
         {
             "matches": ["https://edstem.org/*"],
-            "js": ["content.js"],
+            "js": ["src/content/content.js"],
             "run_at": "document_idle"
         }
     ],
     "action": {
-      "default_popup": "popup.html",
-      "default_icon": "icon.png"
+      "default_popup": "src/popup/popup.html",
+      "default_icon": "public/icon.png"
     },
     "permissions": ["storage", "scripting", "activeTab"],
     "host_permissions": ["https://edstem.org/*"],
     "background": {
-      "service_worker": "background.js"
+      "service_worker": "src/background/background.js"
     }
   }
   
