@@ -1,0 +1,142 @@
+body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+}
+
+.container {
+    background-color: white;
+    color: #1a1a1a;
+    padding: 16px;
+    width: 450px;
+    font-size: 14px;
+}
+
+.header-container {
+    margin-bottom: 5px;
+    background-color: #562C87;
+    padding: 10px;
+}
+
+.header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.title {
+    font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-weight: 700;
+    font-size: 40px;
+    color: #ffffff;
+    display: inline-block;
+    border-radius: 4px;
+    line-height: 1;
+}
+
+.title .gray {
+    opacity: 0.5;
+}
+
+.large {
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 5px;
+    margin-bottom: 12px;
+    color: #333;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 4px;
+}
+
+
+
+/*CHANGE THIS*/
+.button-group button,
+.import-label {
+    background: #f0f4ff;
+    color: #002244;
+    border: 1px solid #ccd9ff;
+    border-radius: 4px;
+    padding: 4px 10px;
+    margin-left: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.button-group button:hover,
+.import-label:hover {
+    background: #dce8ff;
+}
+
+textarea {
+    width: 96%;
+    height: 80px;
+    font-family: monospace;
+    background: #fafafa;
+    border: 1px solid #ccc;
+    padding: 8px;
+    margin-bottom: 10px;
+    resize: vertical;
+    border-radius: 4px;
+}
+
+.add-btn {
+    background-color: #002244;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: background 0.2s ease;
+}
+
+.add-btn:hover {
+    background-color: #003366;
+}
+
+/* Deduction Item Styles */
+.deduction-container {
+    background: #f9f9f9;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+}
+
+.deduction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.deduction-title {
+    font-size: 16px;
+}
+
+.deduction-remove-button {
+    background: #d32f2f;
+    border: none;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+
+
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.deduction-remove-button:hover {
+    background: #b71c1c;
+}
+
+.deduction-body {
+    margin-top: 8px;
+    font-family: monospace;
+    white-space: pre-wrap;
+}

@@ -1,0 +1,28 @@
+{
+  "name": "grade-ed",
+  "version": "1.0.0",
+  "description": "A Chrome extension to simplify grading on EdStem.",
+  "main": "src/background/background.js",
+  "scripts": {
+    "build:popup": "esbuild src/popup/index.tsx --bundle --outfile=dist/popup.bundle.js --loader:.ts=ts --loader:.tsx=tsx --minify",
+    "build:content": "esbuild src/content/content.ts --bundle --outfile=dist/content.js --loader:.ts=ts --minify",
+    "build:background": "esbuild src/background/background.ts --bundle --outfile=dist/background.js --loader:.ts=ts --minify",
+    "copy:static": "node scripts/copyStatic.js",
+    "build": "npm run build:popup && npm run build:content && npm run build:background && npm run copy:static"
+  },
+  "keywords": [],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/chrome": "^0.0.315",
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "cpy": "^11.1.0",
+    "esbuild": "^0.25.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

@@ -56,7 +56,7 @@ function setupDeductionsMenu(containerEl) {
 
   const updateMenu = () => {
     const query = Array.from(containerEl.querySelectorAll('.am-view-paragraphNode'))
-      .map(p => p.textContent.trim()).join(' ');
+      .map(p => (p as Element).textContent.trim()).join(' ');
     const normalized = query.trim().toLowerCase();
 
     const filteredItems = normalized ?
@@ -110,6 +110,9 @@ const observer = new MutationObserver(mutations =>
     mutation.addedNodes.forEach(node => {
       if (node.nodeType === 1) {
         processNode(node);
+
+        // Ensure node is an Element
+        if(!(node instanceof Element)) return;
         node.querySelectorAll?.(TARGET).forEach(processNode);
       }
     })
