@@ -1,6 +1,12 @@
+/* 
+content.ts is the script that handles the deductions window appearing in ed. Content listens
+for new instances of the Ed feedback window (where TA's write comments), and upon finding them,
+injects the HTML + CSS for the deduction window.
+*/
+
 // TARGET is how we identify Ed feedback windows
 const TARGET = '.feedback-comment-input';
-// Set containing all
+// Set containing all feedback windows already "handled" (ones with the deduction window already added)
 const processed = new WeakSet();
 let DEDUCTIONS = [];
 
@@ -46,7 +52,10 @@ function simulatePaste(containerEl, markdown) {
   });
 }
 
-// Sets up deduction menu 
+// Sets up deduction menu by:
+// - Inserting HTML + CSS
+// - Adding a listener for changes in the deduction menu, then updates the HTML 
+//   accordingly (this is the search feature)
 function setupDeductionsMenu(containerEl) {
   if (containerEl.querySelector('.deduction-menu')) return;
 

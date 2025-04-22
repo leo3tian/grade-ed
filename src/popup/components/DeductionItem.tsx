@@ -12,8 +12,8 @@ const DeductionItem:React.FC<DeductionItemProps> = ({index, title, body, onDelet
     const [showDeduction, setShowDeduction] = useState<boolean>(false);
 
     return (
-        <div className="deduction-container"> 
-            <div className="deduction-header" onClick={() => setShowDeduction(!showDeduction)}>
+        <div className="deduction-container" onClick={() => setShowDeduction(!showDeduction)}> 
+            <div className="deduction-header">
                 <div className="deduction-title">{title}</div>
                 <button 
                     className="deduction-remove-button" 

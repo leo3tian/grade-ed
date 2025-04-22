@@ -47,10 +47,38 @@ body {
     padding-bottom: 4px;
 }
 
-
-
 /*CHANGE THIS*/
-.button-group button,
+
+button {
+    background-color: #562C87;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: background 0.2s ease;
+    margin-bottom: 0px;
+}
+
+button:hover {
+    background-color: #3a1e5a;
+}
+
+textarea {
+    width: 96%;
+    height: 80px;
+    font-family: monospace;
+    background: #fafafa;
+    border: 1px solid #ccc;
+    padding: 8px;
+    margin-bottom: 10px;
+    resize: vertical;
+    border-radius: 4px;
+}
+
+/* .button-group button,
 .import-label {
     background: #f0f4ff;
     color: #002244;
@@ -68,17 +96,7 @@ body {
     background: #dce8ff;
 }
 
-textarea {
-    width: 96%;
-    height: 80px;
-    font-family: monospace;
-    background: #fafafa;
-    border: 1px solid #ccc;
-    padding: 8px;
-    margin-bottom: 10px;
-    resize: vertical;
-    border-radius: 4px;
-}
+
 
 .add-btn {
     background-color: #002244;
@@ -94,7 +112,7 @@ textarea {
 
 .add-btn:hover {
     background-color: #003366;
-}
+} */
 
 /* Deduction Item Styles */
 .deduction-container {
@@ -136,7 +154,10 @@ textarea {
 }
 
 .deduction-body {
+    background: white;
     margin-top: 8px;
+    margin-bottom: 0px;
+    padding: 5px;
     font-family: monospace;
     white-space: pre-wrap;
 }

@@ -100,7 +100,7 @@ const Popup = () => {
       <div className="deduction-list">
         {deductions.map((markdown, index) => {
           const headerText = markdown.split('\n')[0].replaceAll('**', '');
-          const bodyText = markdown.split('\n').slice(1).join('\n');
+          const bodyText = markdown;
           return <DeductionItem
             key={index}
             index={index}
