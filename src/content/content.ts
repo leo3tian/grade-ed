@@ -3,6 +3,7 @@ content.ts is the script that handles the deductions window appearing in ed. Con
 for new instances of the Ed feedback window (where TA's write comments), and upon finding them,
 injects the HTML + CSS for the deduction window.
 */
+import { marked } from 'marked';
 
 // TARGET is how we identify Ed feedback windows
 const TARGET = '.feedback-comment-input';
@@ -80,8 +81,30 @@ function setupDeductionsMenu(containerEl) {
     filteredItems.forEach(item => {
       const menuItem = document.createElement("div");
       menuItem.className = "menu-item";
-      menuItem.innerHTML = `<strong>${item.text.split('\n')[0].replaceAll('**', '')}</strong>`;
-      menuItem.addEventListener("mousedown", () => simulatePaste(containerEl, item.text));
+
+      const [header] = item.text.split('\n');
+      menuItem.innerHTML = `<strong>${header.replaceAll('**', '')}</strong>`;
+
+      // Preview on hover
+      menuItem.addEventListener("mouseenter", () => {
+        const paragraph = containerEl.querySelector('.am-view-paragraphNode');
+        if (!paragraph || !paragraph.isContentEditable) return;
+
+        showGhostPreview(paragraph as HTMLElement, item.text);
+      });
+
+      // Restore after hover
+      menuItem.addEventListener("mouseleave", () => {
+        removeGhostPreview();
+      });
+
+      // Paste on click
+      menuItem.addEventListener("mousedown", () => {
+        
+        simulatePaste(containerEl, item.text);
+        removeGhostPreview();
+      });
+
       menu.appendChild(menuItem);
     });
   };
@@ -101,6 +124,32 @@ function setupDeductionsMenu(containerEl) {
 
   updateMenu();
 }
+
+function showGhostPreview(targetEl: HTMLElement, content: string) {
+  // Remove any existing preview
+  removeGhostPreview();
+
+  const ghost = document.createElement('div');
+  ghost.className = 'ghost-preview';
+  ghost.innerHTML = marked.parse(content) as string; 
+
+  // Match size/position of paragraphNode
+  const padding: number = 5;
+  const rect = targetEl.parentElement.getBoundingClientRect();
+  ghost.style.position = 'absolute';
+  ghost.style.top = `${rect.top + window.scrollY + padding}px`;
+  ghost.style.left = `${rect.left + window.scrollX + padding}px`;
+  ghost.style.width = `${rect.width - padding}px`;
+  ghost.style.height = `${rect.height - padding}px`;
+  ghost.style.overflow = 'hidden';
+
+  document.body.appendChild(ghost);
+}
+
+function removeGhostPreview() {
+  document.querySelectorAll('.ghost-preview').forEach(el => el.remove());
+}
+
 
 // Process node (matches to TARGET)
 //  - Set up deductions menu
@@ -143,12 +192,16 @@ style.textContent = `
     overflow-y: auto;
     width: 100%;
     cursor: default;
+    position: relative;
+    z-index: 1;
   }
   .menu-item {
     padding: 6px 10px;
     cursor: pointer;
     border-bottom: 1px solid #eee;
-    white-space: pre-wrap;
+
+    position: relative;
+    overflow: visible;
   }
   .menu-item:hover {
     background-color: #f0f0f0;
@@ -157,6 +210,48 @@ style.textContent = `
     outline: none;
     background-color: #e0e0e0;
   }
+  .menu-item-text {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+  }
+
+.tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  transform: translateY(4px);
+  visibility: hidden;
+  opacity: 0;
+  background: #333;
+  color: white;
+  padding: 8px;
+  font-size: 13px;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  z-index: 999;
+  pointer-events: none;
+  width: max-content;
+  max-width: 300px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.ghost-preview {
+  pointer-events: none;
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 14px;
+  background: white;
+  color: #444;
+  border-radius: 0;
+  z-index: 9999;
+}
+
+.menu-item:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
 `;
 
 // Getting deductions
