@@ -131,6 +131,8 @@ function showGhostPreview(targetEl: HTMLElement, content: string) {
 
   const ghost = document.createElement('div');
   ghost.className = 'ghost-preview';
+
+  // Parse as markdown
   ghost.innerHTML = marked.parse(content) as string; 
 
   // Match size/position of paragraphNode
@@ -246,6 +248,15 @@ style.textContent = `
   border-radius: 0;
   z-index: 9999;
 }
+
+.ghost-preview {
+  margin: 2px 0; /* tighten spacing between lines */
+}
+
+.ghost-preview {
+  line-height: 1.4;
+}
+
 
 .menu-item:hover .tooltip {
   visibility: visible;
