@@ -31,6 +31,7 @@ body {
     display: inline-block;
     border-radius: 4px;
     line-height: 1;
+    cursor: pointer;
 }
 
 .title .gray {
@@ -78,43 +79,7 @@ textarea {
     border-radius: 4px;
 }
 
-/* .button-group button,
-.import-label {
-    background: #f0f4ff;
-    color: #002244;
-    border: 1px solid #ccd9ff;
-    border-radius: 4px;
-    padding: 4px 10px;
-    margin-left: 6px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-.button-group button:hover,
-.import-label:hover {
-    background: #dce8ff;
-}
-
-
-
-.add-btn {
-    background-color: #002244;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    font-size: 13px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-bottom: 16px;
-    transition: background 0.2s ease;
-}
-
-.add-btn:hover {
-    background-color: #003366;
-} */
-
-/* Deduction Item Styles */
+/* DeductionItem */
 .deduction-container {
     background: #f9f9f9;
     border: 1px solid #ccc;
@@ -161,3 +126,41 @@ textarea {
     font-family: monospace;
     white-space: pre-wrap;
 }
+
+
+/* LibraryItem */
+.library-item {
+    background: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  
+  .library-item:hover {
+    background: #f0f0f0;
+  }
+  
+  .library-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .library-name {
+    font-weight: bold;
+  }
+  
+  .library-description {
+    font-size: 13px;
+    color: #555;
+    margin-top: 4px;
+  }
+
+  .library-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+  
