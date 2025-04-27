@@ -9,7 +9,7 @@ import { Library } from '../popup/types';
 // TARGET is how we identify Ed feedback windows
 const TARGET = '.feedback-comment-input';
 // Set containing all feedback windows already "handled" (ones with the deduction window already added)
-const processed = new WeakSet();
+let processed = new WeakSet<Element>();
 let DEDUCTIONS = [];
 
 function selectText(element) {
@@ -283,6 +283,38 @@ chrome.storage.local.get({ libraries: {} }, (data) => {
   document.querySelectorAll(TARGET).forEach(processNode);
   observer.observe(document.body, { childList: true, subtree: true });
 });
+
+function isEnabledLibrary(lib: unknown): lib is { enabled: boolean; deductions: string[] } {
+  return (
+    typeof lib === 'object' &&
+    lib !== null &&
+    'enabled' in lib &&
+    typeof (lib as any).enabled === 'boolean' &&
+    (lib as any).enabled
+  );
+}
+
+// Listen for data changes to the Libraries
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'local' && changes.libraries) {
+    const newLibraries = changes.libraries.newValue || {};
+
+    const enabledDeductions = Object.values(newLibraries)
+      .filter(lib => isEnabledLibrary(lib))
+      .flatMap(lib => lib.deductions || []);
+
+    DEDUCTIONS = enabledDeductions;
+    console.log('🔄 Deductions updated from storage change:', DEDUCTIONS);
+
+    // Close all open deduction menus
+    document.querySelectorAll('.deduction-menu').forEach(menu => menu.remove());
+    processed = new WeakSet;
+    // Reopen
+    document.querySelectorAll(TARGET).forEach(processNode);
+  }
+});
+
+
 
 
 document.head.appendChild(style);
