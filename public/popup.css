@@ -8,12 +8,12 @@ body {
     color: #1a1a1a;
     padding: 16px;
     width: 450px;
+    min-height: 300px;
     font-size: 14px;
 }
 
 .header-container {
-    margin-bottom: 5px;
-    background-color: #562C87;
+    background-color: #271043;
     padding: 10px;
 }
 
@@ -23,19 +23,75 @@ body {
     align-items: center;
 }
 
+.settings-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.2s;
+}
+
+.settings-button:hover {
+    color: #d1c4e9; /* lighter purple on hover */
+}
+
 .title {
     font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-weight: 700;
-    font-size: 40px;
+    font-size: 30px;
     color: #ffffff;
     display: inline-block;
     border-radius: 4px;
     line-height: 1;
     cursor: pointer;
+    padding: 5px;
 }
 
 .title .gray {
     opacity: 0.5;
+}
+
+/* Home View */
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+  }
+  
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+  
+  .empty-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #333;
+  }
+  
+  .empty-subtitle {
+    font-size: 14px;
+    color: #666;
+  }
+  
+
+/* Library Details View */
+
+.library-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    height: 100px;
+    padding: 10px;
+    font-size: 14px;
+    background: #fafafa;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    resize: vertical;
+    margin-bottom: 16px;
 }
 
 .large {
@@ -44,40 +100,106 @@ body {
     margin-top: 5px;
     margin-bottom: 12px;
     color: #333;
-    border-bottom: 1px solid #ddd;
     padding-bottom: 4px;
 }
 
-/*CHANGE THIS*/
+/*Button row*/
+.button-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
 
-button {
+.primary-button {
     background-color: #562C87;
     color: white;
     border: none;
-    padding: 6px 12px;
-    font-size: 13px;
-    border-radius: 4px;
+    padding: 8px 16px;
+    font-weight: bold;
+    font-size: 14px;
+    border-radius: 6px;
     cursor: pointer;
-    margin-bottom: 16px;
-    transition: background 0.2s ease;
-    margin-bottom: 0px;
+    transition: background-color 0.2s;
 }
 
-button:hover {
+.primary-button:hover {
     background-color: #3a1e5a;
 }
 
-textarea {
-    width: 96%;
-    height: 80px;
-    font-family: monospace;
-    background: #fafafa;
-    border: 1px solid #ccc;
-    padding: 8px;
-    margin-bottom: 10px;
-    resize: vertical;
-    border-radius: 4px;
+.secondary-button {
+    background-color: white;
+    color: #562C87;
+    border: 2px solid #562C87;
+    padding: 8px 16px;
+    font-weight: bold;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
 }
+
+.secondary-button:hover {
+    background-color: #f3e8ff;
+}
+
+/* Grid container (in Home.tsx) */
+.library-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* exactly 2 equal columns */
+    gap: 12px;
+}
+
+/* Library Modal */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.modal-field {
+    margin-bottom: 16px;
+}
+
+.modal-field label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.modal-field input,
+.modal-field textarea {
+    width: 100%;
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+  
+
 
 /* DeductionItem */
 .deduction-container {
@@ -129,38 +251,90 @@ textarea {
 
 
 /* LibraryItem */
-.library-item {
-    background: #fafafa;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 10px;
-    margin-bottom: 8px;
-    cursor: pointer;
-  }
-  
-  .library-item:hover {
-    background: #f0f0f0;
-  }
-  
-  .library-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  .library-name {
-    font-weight: bold;
-  }
-  
-  .library-description {
-    font-size: 13px;
-    color: #555;
-    margin-top: 4px;
-  }
 
-  .library-item input[type="checkbox"] {
+
+/* Card for each library */
+.library-card {
+    position: relative;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.08);
+    padding: 16px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+
+.library-card:hover {
+    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Top area (checkbox + menu) */
+.library-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Checkbox (left aligned) */
+.library-card-header input[type="checkbox"] {
     width: 20px;
     height: 20px;
     cursor: pointer;
-  }
-  
+
+}
+
+/* 3-dots button */
+.library-menu-trigger {
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+}
+
+/* Dropdown menu */
+.library-menu {
+    position: absolute;
+    top: 32px;
+    right: 12px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15);
+    font-size: 14px;
+    min-width: 120px;
+    z-index: 10;
+}
+
+.library-menu div {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.library-menu div:hover {
+    background: #f0f0f0;
+}
+
+/* Body: title + description */
+.library-card-body {
+    margin-top: 8px;
+}
+
+.library-title {
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 4px;
+    color: #222; /* slightly darker */
+}
+
+.library-description {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.4;
+    max-height: 3.5em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+

@@ -4,6 +4,7 @@ for new instances of the Ed feedback window (where TA's write comments), and upo
 injects the HTML + CSS for the deduction window.
 */
 import { marked } from 'marked';
+import { Library } from '../popup/types';
 
 // TARGET is how we identify Ed feedback windows
 const TARGET = '.feedback-comment-input';
@@ -266,13 +267,22 @@ style.textContent = `
 `;
 
 // Getting deductions
-chrome.storage.local.get({ customDeductions: [] }, (data) => {
-  DEDUCTIONS = data.customDeductions || [];
-  console.log(DEDUCTIONS);
+chrome.storage.local.get({ libraries: {} }, (data) => {
+  const libs = data.libraries || {};
 
-  // Once loaded, process nodes and observe DOM
+  // Only take enabled libraries
+  const libraries = Object.values(libs) as Library[];
+
+  const enabledDeductions = libraries
+    .filter(lib => lib.enabled)
+    .flatMap(lib => lib.deductions);
+  
+  DEDUCTIONS = enabledDeductions;
+  console.log("Loaded deductions:", DEDUCTIONS);
+
   document.querySelectorAll(TARGET).forEach(processNode);
   observer.observe(document.body, { childList: true, subtree: true });
 });
+
 
 document.head.appendChild(style);

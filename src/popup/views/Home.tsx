@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Library } from '../types';
 import LibraryItem from '../components/LibraryItem';
+import LibraryModal from '../components/LibraryModal';
 import {
   isLibrary,
   willOverwriteLibrary,
   loadLibraries,
   saveLibraries,
-  updateLibrary,
-  importLibraries
+  importLibraries,
 } from '../utils/libraryStorage';
 
 type HomeProps = {
@@ -16,7 +16,8 @@ type HomeProps = {
 
 const Home: React.FC<HomeProps> = ({ navigate }) => {
   const [libraries, setLibraries] = useState<{ [name: string]: Library }>({});
-  const [newLibraryName, setNewLibraryName] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [editingLibrary, setEditingLibrary] = useState<Partial<Library> | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -43,26 +44,9 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
     initializeLibraries();
   }, []);
 
-  const handleCreateLibrary = async () => {
-    const name = newLibraryName.trim();
-    if (!name) return;
-
-    if (willOverwriteLibrary(libraries, name)) {
-      const confirmOverwrite = window.confirm(`A library named "${name}" already exists. Overwrite it?`);
-      if (!confirmOverwrite) return;
-    }
-
-    const newLibrary: Library = {
-      name,
-      description: '',
-      enabled: true,
-      deductions: [],
-    };
-
-    const updated = { ...libraries, [name]: newLibrary };
-    await saveLibraries(updated);
-    setLibraries(updated);
-    setNewLibraryName('');
+  const refreshLibraries = async () => {
+    const libs = await loadLibraries();
+    setLibraries(libs);
   };
 
   const handleOpenLibrary = (name: string) => {
@@ -97,7 +81,6 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
         }
 
         const isValid = Object.values(imported).every((lib) => isLibrary(lib));
-
         if (!isValid) {
           alert('Invalid library structure.');
           return;
@@ -105,7 +88,7 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
 
         const { success } = await importLibraries(imported);
         if (success) {
-          setLibraries(imported);
+          await refreshLibraries();
           alert('✅ Libraries imported successfully.');
         }
       } catch {
@@ -115,16 +98,46 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
     reader.readAsText(file);
   };
 
-  const handleUpdateLibrary = async (libraryKey: string, updates: Partial<Library>) => {
-    const updated = await updateLibrary(libraryKey, updates);
-    setLibraries(updated);
+  const handleSaveLibrary = async (updates: Partial<Library>) => {
+    if (!updates.name) return;
+
+    const name = updates.name.trim();
+    const currentLibraries = await loadLibraries();
+    const updatedLibraries = { ...currentLibraries };
+
+    if (editingLibrary?.name && editingLibrary.name !== name) {
+      delete updatedLibraries[editingLibrary.name];
+    }
+
+    updatedLibraries[name] = {
+      name,
+      description: updates.description || '',
+      enabled: updates.enabled ?? true,
+      deductions: updates.deductions || [],
+    };
+
+    await saveLibraries(updatedLibraries);
+    setLibraries(updatedLibraries);
   };
 
   return (
     <div className="library-home">
-      <div className="button-group">
-        <button onClick={handleExportLibraries}>Export Libraries</button>
-        <button onClick={() => importInputRef.current?.click()}>Import Libraries</button>
+      <div className="button-row">
+        <button
+          className="primary-button"
+          onClick={() => {
+            setEditingLibrary({});
+            setShowModal(true);
+          }}
+        >
+          + New Library
+        </button>
+        <button className="secondary-button" onClick={() => importInputRef.current?.click()}>
+          Import
+        </button>
+        <button className="secondary-button" onClick={handleExportLibraries}>
+          Export
+        </button>
         <input
           type="file"
           ref={importInputRef}
@@ -133,26 +146,44 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
         />
       </div>
 
-      <div className="create-library">
-        <input
-          type="text"
-          placeholder="New library name"
-          value={newLibraryName}
-          onChange={(e) => setNewLibraryName(e.target.value)}
-        />
-        <button onClick={handleCreateLibrary}>Create</button>
-      </div>
-
-      <div className="library-list">
-        {Object.keys(libraries).map((libraryName) => (
+      <div className="library-grid">
+        {Object.entries(libraries).map(([key, lib]) => (
           <LibraryItem
-            key={libraryName}
-            library={libraries[libraryName]}
-            onClick={() => handleOpenLibrary(libraryName)}
-            updateLibrary={handleUpdateLibrary}
+            key={lib.name}
+            library={lib}
+            onClick={() => handleOpenLibrary(lib.name)}
+            onEdit={(library) => {
+              setEditingLibrary(library);
+              setShowModal(true);
+            }}
+            onRefresh={refreshLibraries}
           />
         ))}
       </div>
+
+      {Object.keys(libraries).length === 0 && (
+        <div className="empty-state">
+            <div className="empty-icon">📚</div>
+            <div className="empty-title">No libraries yet</div>
+            <div className="empty-subtitle">Click "+ New Library" to get started!</div>
+        </div>
+        )}  
+
+
+      {showModal && editingLibrary && (
+        <LibraryModal
+          initialLibrary={editingLibrary}
+          onSave={(updates) => {
+            handleSaveLibrary(updates);
+            setShowModal(false);
+            setEditingLibrary(null);
+          }}
+          onCancel={() => {
+            setShowModal(false);
+            setEditingLibrary(null);
+          }}
+        />
+      )}
     </div>
   );
 };

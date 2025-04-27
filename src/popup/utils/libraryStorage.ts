@@ -77,8 +77,23 @@ export async function updateLibrary(
 
   await saveLibraries(updatedLibraries);
   // Runs callback function
-  onSuccess();
+  onSuccess?.();
   return updatedLibraries;
+}
+
+// Delete a library
+export async function deleteLibrary(libraryKey: string): Promise<{ [name: string]: Library }> {
+    const currentLibraries = await loadLibraries();
+    if (!currentLibraries[libraryKey]) {
+    console.warn(`Library '${libraryKey}' not found.`);
+    return currentLibraries;
+    }
+
+    const updatedLibraries = { ...currentLibraries };
+    delete updatedLibraries[libraryKey];
+
+    await saveLibraries(updatedLibraries);
+    return updatedLibraries;
 }
 
 // Import a full set of libraries (with optional overwrite confirmation)

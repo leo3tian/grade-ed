@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Library } from '../types';
 import DeductionItem from '../components/DeductionItem';
-import { loadLibraries, saveLibraries, updateLibrary } from '../utils/libraryStorage';
+import { loadLibraries, updateLibrary } from '../utils/libraryStorage';
 
 type LibraryDetailProps = {
   libraryName: string;
@@ -10,8 +10,6 @@ type LibraryDetailProps = {
 
 const LibraryDetail: React.FC<LibraryDetailProps> = ({ libraryName, goBack }) => {
   const [library, setLibrary] = useState<Library | null>(null);
-  const [newName, setNewName] = useState('');
-  const [description, setDescription] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -20,8 +18,6 @@ const LibraryDetail: React.FC<LibraryDetailProps> = ({ libraryName, goBack }) =>
       const lib = libs[libraryName];
       if (lib) {
         setLibrary(lib);
-        setNewName(lib.name);
-        setDescription(lib.description);
       }
     };
 
@@ -33,7 +29,8 @@ const LibraryDetail: React.FC<LibraryDetailProps> = ({ libraryName, goBack }) =>
     if (!newText || !library) return;
 
     const updated = { ...library, deductions: [...library.deductions, newText] };
-    const updatedLibraries = await updateLibrary(libraryName, updated, () => setLibrary(updatedLibraries[updated.name]));
+    const updatedLibraries = await updateLibrary(libraryName, updated);
+    setLibrary(updatedLibraries[updated.name])
     
     if (inputRef.current) inputRef.current.value = '';
   };
@@ -47,20 +44,8 @@ const LibraryDetail: React.FC<LibraryDetailProps> = ({ libraryName, goBack }) =>
     };
 
     // Calls updateLibrary method. If success, sets current library to the updated version
-    const updatedLibraries = await updateLibrary(libraryName, updated, () => setLibrary(updatedLibraries[updated.name]));
-    
-  };
-
-  const handleSaveDetails = async () => {
-    if (!library) return;
-
-    const updated = {
-      ...library,
-      name: newName.trim(),
-      description: description.trim(),
-    };
-    // Calls updateLibrary method. If success, sets current library to the updated version
-    const updatedLibraries = await updateLibrary(libraryName, updated, () => setLibrary(updatedLibraries[updated.name]));
+    const updatedLibraries = await updateLibrary(libraryName, updated);
+    setLibrary(updatedLibraries[updated.name])
     
   };
 
@@ -70,30 +55,21 @@ const LibraryDetail: React.FC<LibraryDetailProps> = ({ libraryName, goBack }) =>
 
   return (
     <>
-      <button onClick={goBack}>Back</button>
-      <div className="large">Editing Library</div>
-
-      <div>
-        <input
-          type="text"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          placeholder="Library Name"
-        />
+      <div className="button-row">
+        <button className="secondary-button" onClick={goBack}>Back</button>
       </div>
-      <div>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Library Description"
-        />
-      </div>
-      <button onClick={handleSaveDetails}>Save Details</button>
 
-      <textarea ref={inputRef} placeholder="Enter markdown..." />
-      <button className="add-btn" onClick={handleAdd}>Add Deduction</button>
+      <div className="large">Editing {library.name}</div>
+
+      <textarea 
+        className="library-textarea" 
+        ref={inputRef} 
+        placeholder="Enter markdown..." 
+      />
+      <button className="primary-button" onClick={handleAdd}>Add Deduction</button>
 
       <div className="large">Loaded Deductions</div>
+      
       <div className="deduction-list">
         {library.deductions.map((markdown, index) => {
           const headerText = markdown.split('\n')[0].replaceAll('**', '');
