@@ -12,9 +12,11 @@ const TARGET = '.feedback-comment-input';
 let processed = new WeakSet<Element>();
 let DEDUCTIONS = [];
 
+// Utility method for forcing selection of existing text in deduction window
+// Used by simulatePaste() so existing text disappears after paste
 function selectText(element) {
   const range = document.createRange();
-  range.selectNodeContents(element); // or use range.setStart/setEnd for finer control
+  range.selectNodeContents(element);
   const selection = window.getSelection();
   selection.removeAllRanges();
   selection.addRange(range);
@@ -27,7 +29,7 @@ function simulatePaste(containerEl, markdown) {
 
   const paragraph = containerEl.querySelector('.am-view-paragraphNode');
   if (!paragraph || !paragraph.isContentEditable) {
-    console.warn("🛑 Could not find editable paragraph");
+    console.warn("Could not find editable paragraph");
     return;
   }
 
@@ -70,6 +72,7 @@ function setupDeductionsMenu(containerEl) {
       .map(p => (p as Element).textContent.trim()).join(' ');
     const normalized = query.trim().toLowerCase();
 
+    // Janky search functionality, currently just searches for direct matches to query
     const filteredItems = normalized ?
       DEDUCTIONS
         .map(text => ({text, score: text.toLowerCase().indexOf(normalized)}))
@@ -180,7 +183,7 @@ const observer = new MutationObserver(mutations =>
   )
 );
 
-// CSS styles
+// CSS styles to be injected
 const style = document.createElement('style');
 style.textContent = `
   .deduction-menu {
@@ -294,7 +297,7 @@ function isEnabledLibrary(lib: unknown): lib is { enabled: boolean; deductions: 
   );
 }
 
-// Listen for data changes to the Libraries
+// Listen for data changes to the Libraries and reload menus upon change
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === 'local' && changes.libraries) {
     const newLibraries = changes.libraries.newValue || {};
@@ -313,8 +316,5 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     document.querySelectorAll(TARGET).forEach(processNode);
   }
 });
-
-
-
 
 document.head.appendChild(style);

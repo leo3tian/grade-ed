@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Library } from '../types';
 
 // Props for the modal
-interface LibraryModalProps {
+type LibraryModalProps = {
   initialLibrary: Partial<Library>;
   onSave: (updates: Partial<Library>) => void;
   onCancel: () => void;

@@ -1,5 +1,3 @@
-// src/utils/libraryStorage.ts
-
 import { Library } from '../types';
 
 // Helper method to validate if an object is a Library
