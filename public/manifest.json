@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Ed Grading Extension",
-  "version": "0.1",
-  "description": "Helps to grade stuff in Ed",
+  "name": "12X Grading Helper",
+  "version": "0.5",
+  "description": "No more switching tabs. Work in progress!",
   "content_scripts": [
       {
           "matches": ["https://edstem.org/*"],
