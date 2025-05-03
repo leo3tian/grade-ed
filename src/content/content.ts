@@ -222,26 +222,6 @@ style.textContent = `
     width: 100%;
   }
 
-.tooltip {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  transform: translateY(4px);
-  visibility: hidden;
-  opacity: 0;
-  background: #333;
-  color: white;
-  padding: 8px;
-  font-size: 13px;
-  border-radius: 4px;
-  white-space: pre-wrap;
-  z-index: 999;
-  pointer-events: none;
-  width: max-content;
-  max-width: 300px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
 .ghost-preview {
   pointer-events: none;
   white-space: pre-wrap;
@@ -259,12 +239,6 @@ style.textContent = `
 
 .ghost-preview {
   line-height: 1.4;
-}
-
-
-.menu-item:hover .tooltip {
-  visibility: visible;
-  opacity: 1;
 }
 
 `;
