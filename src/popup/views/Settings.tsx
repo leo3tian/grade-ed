@@ -5,10 +5,15 @@ const Settings: React.FC = () => {
   const [livePreviewEnabled, setLivePreviewEnabled] = useState<boolean>(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('livePreview');
-    if (stored !== null) {
-      setLivePreviewEnabled(stored === 'true');
-    }
+    chrome.storage.local.get(['livePreview'], (data) => {
+      if (data.livePreview === undefined) {
+        // Set default value if it doesn't exist
+        chrome.storage.local.set({ livePreview: true });
+        setLivePreviewEnabled(true);
+      } else {
+        setLivePreviewEnabled(Boolean(data.livePreview));
+      }
+    });
   }, []);
 
   const handleDeleteAllLibraries = async () => {
@@ -22,7 +27,7 @@ const Settings: React.FC = () => {
   const handleTogglePreview = (e: React.ChangeEvent<HTMLInputElement>) => {
     const enabled = e.target.checked;
     setLivePreviewEnabled(enabled);
-    localStorage.setItem('livePreview', String(enabled));
+    chrome.storage.local.set({ livePreview: enabled });
   };
 
   return (

@@ -11,6 +11,7 @@ const TARGET = '.feedback-comment-input';
 // Set containing all feedback windows already "handled" (ones with the deduction window already added)
 let processed = new WeakSet<Element>();
 let DEDUCTIONS = [];
+let LIVE_PREVIEW_ENABLED = true;
 
 // Utility method for forcing selection of existing text in deduction window
 // Used by simulatePaste() so existing text disappears after paste
@@ -91,6 +92,7 @@ function setupDeductionsMenu(containerEl) {
 
       // Preview on hover
       menuItem.addEventListener("mouseenter", () => {
+        if(!LIVE_PREVIEW_ENABLED) return;
         const paragraph = containerEl.querySelector('.am-view-paragraphNode');
         if (!paragraph || !paragraph.isContentEditable) return;
 
@@ -241,25 +243,34 @@ style.textContent = `
   line-height: 1.4;
 }
 
+.ghost-preview p {
+  margin: 4px 0;
+}
+
+.ghost-preview strong {
+  font-weight: 600;
+}
+
+
 `;
 
 // Getting deductions
-chrome.storage.local.get({ libraries: {} }, (data) => {
+chrome.storage.local.get(['libraries', 'livePreview'], (data) => {
   const libs = data.libraries || {};
+  LIVE_PREVIEW_ENABLED = data.livePreview !== false; // default true
 
-  // Only take enabled libraries
   const libraries = Object.values(libs) as Library[];
-
   const enabledDeductions = libraries
     .filter(lib => lib.enabled)
     .flatMap(lib => lib.deductions);
-  
+
   DEDUCTIONS = enabledDeductions;
   console.log("Loaded deductions:", DEDUCTIONS);
 
   document.querySelectorAll(TARGET).forEach(processNode);
   observer.observe(document.body, { childList: true, subtree: true });
 });
+
 
 function isEnabledLibrary(lib: unknown): lib is { enabled: boolean; deductions: string[] } {
   return (
@@ -273,22 +284,32 @@ function isEnabledLibrary(lib: unknown): lib is { enabled: boolean; deductions: 
 
 // Listen for data changes to the Libraries and reload menus upon change
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === 'local' && changes.libraries) {
-    const newLibraries = changes.libraries.newValue || {};
+  if (areaName === 'local') {
+    let shouldReload = false;
 
-    const enabledDeductions = Object.values(newLibraries)
-      .filter(lib => isEnabledLibrary(lib))
-      .flatMap(lib => lib.deductions || []);
+    if ('livePreview' in changes) {
+      LIVE_PREVIEW_ENABLED = Boolean(changes.livePreview.newValue);
+      console.log('🛠️ Live preview setting changed:', LIVE_PREVIEW_ENABLED);
+      shouldReload = true;
+    }
 
-    DEDUCTIONS = enabledDeductions;
-    console.log('🔄 Deductions updated from storage change:', DEDUCTIONS);
+    if ('libraries' in changes) {
+      const newLibraries = changes.libraries.newValue || {};
+      const enabledDeductions = Object.values(newLibraries)
+        .filter(lib => isEnabledLibrary(lib))
+        .flatMap(lib => lib.deductions || []);
+      DEDUCTIONS = enabledDeductions;
+      console.log('🔄 Deductions updated from storage change:', DEDUCTIONS);
+      shouldReload = true;
+    }
 
-    // Close all open deduction menus
-    document.querySelectorAll('.deduction-menu').forEach(menu => menu.remove());
-    processed = new WeakSet;
-    // Reopen
-    document.querySelectorAll(TARGET).forEach(processNode);
+    if (shouldReload) {
+      document.querySelectorAll('.deduction-menu').forEach(menu => menu.remove());
+      processed = new WeakSet();
+      document.querySelectorAll(TARGET).forEach(processNode);
+    }
   }
 });
+
 
 document.head.appendChild(style);
