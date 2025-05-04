@@ -97,13 +97,30 @@ export async function deleteLibrary(libraryKey: string): Promise<{ [name: string
 // Import a full set of libraries (with optional overwrite confirmation)
 export async function importLibraries(imported: { [name: string]: Library }): Promise<{ success: boolean }> {
   const existingLibraries = await loadLibraries();
+  const updatedLibraries = { ...existingLibraries };
 
-  const overwrites = Object.keys(imported).filter((key) => willOverwriteLibrary(existingLibraries, key));
-  if (overwrites.length > 0) {
-    const confirmOverwrite = window.confirm(`Importing will overwrite ${overwrites.length} existing libraries. Continue?`);
+  const conflicts = Object.keys(imported).filter((key) =>
+    willOverwriteLibrary(existingLibraries, key)
+  );
+
+  if (conflicts.length > 0) {
+    const confirmOverwrite = window.confirm(
+      `The following libraries already exist and will be overwritten:\n\n${conflicts.join('\n')}\n\nProceed with overwrite?`
+    );
     if (!confirmOverwrite) return { success: false };
   }
 
-  await saveLibraries(imported);
+  for (const [key, lib] of Object.entries(imported)) {
+    if (!conflicts.includes(key)) {
+      // Add non-conflicting libraries
+      updatedLibraries[key] = lib;
+    } else {
+      // Only add conflicting ones if confirmed
+      updatedLibraries[key] = lib;
+    }
+  }
+
+  await saveLibraries(updatedLibraries);
   return { success: true };
 }
+
