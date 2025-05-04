@@ -136,7 +136,7 @@ function showGhostPreview(targetEl: HTMLElement, content: string) {
   removeGhostPreview();
 
   const ghost = document.createElement('div');
-  ghost.className = 'ghost-preview';
+  ghost.className = 'am-theme-light ghost';
 
   // Parse as markdown
   ghost.innerHTML = marked.parse(content) as string; 
@@ -152,10 +152,15 @@ function showGhostPreview(targetEl: HTMLElement, content: string) {
   ghost.style.overflow = 'hidden';
 
   document.body.appendChild(ghost);
+
+  const scrollContainer = targetEl.closest('.ffview-scroll');
+
+  scrollContainer.addEventListener('scroll', removeGhostPreview, { once: true });
+  // window.addEventListener('click', removeGhostPreview, { once: true });
 }
 
 function removeGhostPreview() {
-  document.querySelectorAll('.ghost-preview').forEach(el => el.remove());
+  document.querySelectorAll('.ghost').forEach(el => el.remove());
 }
 
 
@@ -224,33 +229,9 @@ style.textContent = `
     width: 100%;
   }
 
-.ghost-preview {
-  pointer-events: none;
-  white-space: pre-wrap;
-  font-family: inherit;
-  font-size: 14px;
+.ghost {
   background: white;
-  color: #444;
-  border-radius: 0;
-  z-index: 9999;
 }
-
-.ghost-preview {
-  margin: 2px 0; /* tighten spacing between lines */
-}
-
-.ghost-preview {
-  line-height: 1.4;
-}
-
-.ghost-preview p {
-  margin: 4px 0;
-}
-
-.ghost-preview strong {
-  font-weight: 600;
-}
-
 
 `;
 
