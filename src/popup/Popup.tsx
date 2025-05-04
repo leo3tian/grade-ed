@@ -4,6 +4,7 @@ import { View } from './types';
 import Header from './components/Header';
 import LibraryDetail from './views/LibraryDetail';
 import Home from './views/Home';
+import Settings from './views/Settings';
 
 const Popup = () => {
 
@@ -15,8 +16,10 @@ const Popup = () => {
         return <Home navigate={setView}/>
       case 'library':
         return <LibraryDetail libraryName={view.libraryName} goBack={() => setView({ name: 'home' })}/>
+      case 'settings':
+        return <Settings/>
       default:
-        return <div>Error - '{view.name}' is not a page!</div>;
+        return <div>Page not found!</div>;
     }
   }
   return(
