@@ -1,3 +1,4 @@
+/* Global Styles */
 body {
     margin: 0;
     font-family: system-ui, sans-serif;
@@ -6,15 +7,19 @@ body {
 .container {
     background-color: white;
     color: #1a1a1a;
-    padding: 16px;
+    padding: 12px;
     width: 450px;
     min-height: 300px;
     font-size: 14px;
 }
 
+/* Header */
 .header-container {
     background-color: #271043;
     padding: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .header-bar {
@@ -30,11 +35,11 @@ body {
     font-size: 24px;
     cursor: pointer;
     padding: 4px;
-    transition: color 0.2s;
+    transition: color 0.1s;
 }
 
 .settings-button:hover {
-    color: #d1c4e9; /* lighter purple on hover */
+    color: #d1c4e9;
 }
 
 .title {
@@ -42,7 +47,6 @@ body {
     font-weight: 700;
     font-size: 30px;
     color: #ffffff;
-    display: inline-block;
     border-radius: 4px;
     line-height: 1;
     cursor: pointer;
@@ -54,56 +58,94 @@ body {
 }
 
 /* Home View */
-
 .empty-state {
     text-align: center;
     padding: 40px 20px;
     color: #666;
-  }
-  
-  .empty-icon {
+}
+
+.empty-icon {
     font-size: 48px;
     margin-bottom: 12px;
-  }
-  
-  .empty-title {
+}
+
+.empty-title {
     font-size: 20px;
     font-weight: bold;
     margin-bottom: 8px;
     color: #333;
-  }
-  
-  .empty-subtitle {
+}
+
+.empty-subtitle {
     font-size: 14px;
     color: #666;
-  }
-  
+}
 
 /* Library Details View */
 
-.library-textarea {
-    width: 100%;
-    box-sizing: border-box;
-    height: 100px;
-    padding: 10px;
-    font-size: 14px;
-    background: #fafafa;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    resize: vertical;
-    margin-bottom: 16px;
+.details-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 0 6px;
 }
+
+.header-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    max-width: 75%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+  
 
 .large {
-    font-size: 20px;
+    font-size: 1.1rem;
     font-weight: 600;
-    margin-top: 5px;
-    margin-bottom: 12px;
-    color: #333;
-    padding-bottom: 4px;
 }
 
-/*Button row*/
+.editor-toolbar {
+    top: 0;
+    background: white;
+    z-index: 10;
+    padding: 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.library-textarea {
+    font-family: monospace;
+    font-size: 0.9rem;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 8px 10px;
+    width: 100%;
+    height: 100px;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.deduction-search {
+    width: 95%;
+    margin: 12px 0;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.deduction-list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid #eee;
+}
+
+/* Buttons */
 .button-row {
     display: flex;
     gap: 8px;
@@ -114,16 +156,16 @@ body {
     background-color: #562C87;
     color: white;
     border: none;
-    padding: 8px 16px;
-    font-weight: bold;
-    font-size: 14px;
-    border-radius: 6px;
+    padding: 10px 16px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.1s;
 }
 
 .primary-button:hover {
-    background-color: #3a1e5a;
+    background-color: #441f6b;
 }
 
 .secondary-button {
@@ -135,21 +177,80 @@ body {
     font-size: 14px;
     border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
+    transition: background-color 0.1s, color 0.1s;
 }
 
 .secondary-button:hover {
     background-color: #f3e8ff;
 }
 
-/* Grid container (in Home.tsx) */
+/* DeductionItem */
+.deduction-container {
+    border-bottom: 1px solid #eee;
+    background: white;
+    transition: background-color 0.1s ease;
+    padding: 0;
+}
+
+.deduction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    cursor: pointer;
+}
+
+.deduction-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    font-size: 0.88rem;
+    color: #222;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.deduction-remove-button {
+    background-color: #EF5350;
+    color: white;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.deduction-remove-button:hover {
+    background-color: #af3d3b;
+}
+
+.deduction-body-wrapper {
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.deduction-body {
+    background: #faf9fc;
+    border-left: 3px solid #ccc;
+    padding: 12px 14px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: "Open Sans", Arial, sans-serif;
+    margin: 4px 0 10px;
+}
+  
+
 .library-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* exactly 2 equal columns */
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
 }
 
-/* Library Modal */
 
 .modal-overlay {
     position: fixed;
@@ -198,62 +299,8 @@ body {
     justify-content: flex-end;
     gap: 8px;
 }
-  
-
-
-/* DeductionItem */
-.deduction-container {
-    background: #f9f9f9;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 12px;
-    margin-bottom: 8px;
-}
-
-.deduction-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.deduction-title {
-    font-size: 16px;
-}
-
-.deduction-remove-button {
-    background: #d32f2f;
-    border: none;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-
-
-    font-size: 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-.deduction-remove-button:hover {
-    background: #b71c1c;
-}
-
-.deduction-body {
-    background: white;
-    margin-top: 8px;
-    margin-bottom: 0px;
-    padding: 5px;
-    font-family: monospace;
-    white-space: pre-wrap;
-}
-
 
 /* LibraryItem */
-
-
-/* Card for each library */
 .library-card {
     position: relative;
     background: white;
@@ -264,37 +311,31 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    transition: box-shadow 0.1s ease, transform 0.1s ease;
 }
-
 
 .library-card:hover {
     box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.12);
 }
 
-/* Top area (checkbox + menu) */
 .library-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-/* Checkbox (left aligned) */
 .library-card-header input[type="checkbox"] {
     width: 20px;
     height: 20px;
     cursor: pointer;
-
 }
 
-/* 3-dots button */
 .library-menu-trigger {
     font-size: 20px;
     cursor: pointer;
     padding: 4px;
 }
 
-/* Dropdown menu */
 .library-menu {
     position: absolute;
     top: 32px;
@@ -317,7 +358,6 @@ body {
     background: #f0f0f0;
 }
 
-/* Body: title + description */
 .library-card-body {
     margin-top: 8px;
 }
@@ -326,7 +366,7 @@ body {
     font-weight: 700;
     font-size: 16px;
     margin-bottom: 4px;
-    color: #222; /* slightly darker */
+    color: #222;
 }
 
 .library-description {
@@ -338,3 +378,45 @@ body {
     text-overflow: ellipsis;
 }
 
+/* Settings */
+.settings-container {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+
+.settings-container h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+}
+
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background-color: #f9f9fb;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #333;
+}
+
+
+.setting-item input[type="checkbox"] {
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+
+.setting-item button.secondary-button {
+    padding: 6px 14px;
+    font-size: 0.85rem;
+}
+  
