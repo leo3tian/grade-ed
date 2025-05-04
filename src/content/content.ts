@@ -201,7 +201,8 @@ style.textContent = `
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     font-family: Arial, sans-serif;
     font-size: 14px;
-    height: 150px;
+    max-height: 150px;
+    min-height: 30px;
     overflow-y: auto;
     width: 100%;
     cursor: default;
