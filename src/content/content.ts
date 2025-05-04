@@ -82,37 +82,44 @@ function setupDeductionsMenu(containerEl) {
       : DEDUCTIONS.map(text => ({ text }));
   
     menu.innerHTML = '';
-  
-    filteredItems.forEach(item => {
-      const menuItem = document.createElement("div");
-      menuItem.className = "menu-item";
 
-      const [header] = item.text.split('\n');
-      menuItem.innerHTML = `<strong>${header.replaceAll('**', '')}</strong>`;
+    if (filteredItems.length === 0) {
+      const noResults = document.createElement("div");
+      noResults.className = "menu-item no-results";
+      noResults.textContent = "No deductions found";
+      menu.appendChild(noResults);
+    } else {
+      filteredItems.forEach(item => {
+        const menuItem = document.createElement("div");
+        menuItem.className = "menu-item";
 
-      // Preview on hover
-      menuItem.addEventListener("mouseenter", () => {
-        if(!LIVE_PREVIEW_ENABLED) return;
-        const paragraph = containerEl.querySelector('.am-view-paragraphNode');
-        if (!paragraph || !paragraph.isContentEditable) return;
+        const [header] = item.text.split('\n');
+        menuItem.innerHTML = `<strong>${header.replaceAll('**', '')}</strong>`;
 
-        showGhostPreview(paragraph as HTMLElement, item.text);
+        // Preview on hover
+        menuItem.addEventListener("mouseenter", () => {
+          if(!LIVE_PREVIEW_ENABLED) return;
+          const paragraph = containerEl.querySelector('.am-view-paragraphNode');
+          if (!paragraph || !paragraph.isContentEditable) return;
+
+          showGhostPreview(paragraph as HTMLElement, item.text);
+        });
+
+        // Restore after hover
+        menuItem.addEventListener("mouseleave", () => {
+          removeGhostPreview();
+        });
+
+        // Paste on click
+        menuItem.addEventListener("mousedown", () => {
+          
+          simulatePaste(containerEl, item.text);
+          removeGhostPreview();
+        });
+
+        menu.appendChild(menuItem);
       });
-
-      // Restore after hover
-      menuItem.addEventListener("mouseleave", () => {
-        removeGhostPreview();
-      });
-
-      // Paste on click
-      menuItem.addEventListener("mousedown", () => {
-        
-        simulatePaste(containerEl, item.text);
-        removeGhostPreview();
-      });
-
-      menu.appendChild(menuItem);
-    });
+    }
   };
 
   const observer = new MutationObserver((mutations) => {
@@ -232,6 +239,13 @@ style.textContent = `
 
 .ghost {
   background: white;
+}
+
+.menu-item.no-results {
+  font-style: italic;
+  color: #888;
+  cursor: default;
+  pointer-events: none;
 }
 
 `;
