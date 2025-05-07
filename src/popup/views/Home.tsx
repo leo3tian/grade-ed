@@ -69,34 +69,38 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
   const handleImportLibraries = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const imported = JSON.parse(reader.result as string);
-
-        if (typeof imported !== 'object' || imported === null) {
-          alert('Invalid file format.');
-          return;
+  
+    // Delay to avoid macOS popup auto-closing bug
+    setTimeout(() => {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const imported = JSON.parse(reader.result as string);
+  
+          if (typeof imported !== 'object' || imported === null) {
+            alert('Invalid file format.');
+            return;
+          }
+  
+          const isValid = Object.values(imported).every((lib) => isLibrary(lib));
+          if (!isValid) {
+            alert('Invalid library structure.');
+            return;
+          }
+  
+          const { success } = await importLibraries(imported);
+          if (success) {
+            await refreshLibraries();
+            alert('✅ Libraries imported successfully.');
+          }
+        } catch {
+          alert('Failed to parse JSON.');
         }
-
-        const isValid = Object.values(imported).every((lib) => isLibrary(lib));
-        if (!isValid) {
-          alert('Invalid library structure.');
-          return;
-        }
-
-        const { success } = await importLibraries(imported);
-        if (success) {
-          await refreshLibraries();
-          alert('✅ Libraries imported successfully.');
-        }
-      } catch {
-        alert('Failed to parse JSON.');
-      }
-    };
-    reader.readAsText(file);
+      };
+      reader.readAsText(file);
+    }, 150); // delay slightly to let popup regain focus
   };
+  
 
   const handleSaveLibrary = async (updates: Partial<Library>) => {
     if (!updates.name) return;
