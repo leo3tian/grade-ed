@@ -1,7 +1,7 @@
-This is a Chrome extension that lets you quickly paste annotations while grading in Ed! Work in progress. For any feedback, questions, concerns, or if you want to help, email tleo@cs! 
-
-Stack:
-- React, TypeScript, HTML/CSS
+### Chrome extension + headache reducer developed for the UW CSE 12x (Intro to CS) series staff. 
+Features:
+- Annotation Menu: Stores annotations and displays them in the Ed grading window, allowing search, preview, & auto paste. Allows importing/exporting sets of annotations.
+- Linter (wip): Line-by-line linter for student code, highlighting flagged lines.
 
 Immediate todos:
 - Smooth out code; comments, quality, functional decomp, etc etc 
@@ -11,3 +11,10 @@ Planned features:
 - Change mechanism for adding deductions to libraries
     - Add keywords for deductions
     - Revamp search function?
+- Linter
+
+Stack:
+- React, TypeScript, HTML/CSS
+
+For any feedback, questions, concerns, or if you want to contribute, email tleo@cs! 
+
