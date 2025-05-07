@@ -69,6 +69,7 @@ function setupDeductionsMenu(containerEl) {
   containerEl.firstElementChild.after(menu);
 
   const updateMenu = () => {
+    removeGhostPreview();
     const query = Array.from(containerEl.querySelectorAll('.am-view-paragraphNode'))
       .map(p => (p as Element).textContent.trim()).join(' ');
     const normalized = query.trim().toLowerCase();
