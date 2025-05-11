@@ -286,7 +286,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 
     if ('livePreview' in changes) {
       LIVE_PREVIEW_ENABLED = Boolean(changes.livePreview.newValue);
-      console.log('🛠️ Live preview setting changed:', LIVE_PREVIEW_ENABLED);
+      //console.log('Live preview setting changed:', LIVE_PREVIEW_ENABLED); // debug
       shouldReload = true;
     }
 
@@ -296,7 +296,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         .filter(lib => isEnabledLibrary(lib))
         .flatMap(lib => lib.deductions || []);
       DEDUCTIONS = enabledDeductions;
-      console.log('🔄 Deductions updated from storage change:', DEDUCTIONS);
+      //console.log('Deductions updated from storage change:', DEDUCTIONS); // debug
       shouldReload = true;
     }
 

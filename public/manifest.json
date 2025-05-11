@@ -1,8 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "12X Grading Helper",
-  "version": "0.5",
-  "description": "No more switching tabs. Work in progress!",
+  "name": "12x Grading Helper",
+  "version": "0.6",
+  "description": "Helps with grading on EdStem!",
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
   "content_scripts": [
       {
           "matches": ["https://edstem.org/*"],

@@ -1,4 +1,4 @@
-### Chrome extension + headache reducer developed for the UW CSE 12x (Intro to CS) series staff. 
+### Chrome extension developed for the UW CSE 12x (Intro to CS) series staff. 
 Features:
 - Annotation Menu: Stores annotations and displays them in the Ed grading window, allowing search, preview, & auto paste. Allows importing/exporting sets of annotations.
 - Linter (wip): Line-by-line linter for student code, highlighting flagged lines.
@@ -15,6 +15,6 @@ Immediate todos:
 Planned features:
 - Change mechanism for adding deductions to libraries
     - Add keywords for deductions
-    - Revamp search function?
+    - Revamp search function
 - Linter
 
