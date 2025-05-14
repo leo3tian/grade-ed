@@ -1,5 +1,5 @@
 /* 
-content.ts is the script that handles the deductions window appearing in ed. Content listens
+window.ts is the script that handles the deductions window appearing in ed. Content listens
 for new instances of the Ed feedback window (where TA's write comments), and upon finding them,
 injects the HTML + CSS for the deduction window.
 */
