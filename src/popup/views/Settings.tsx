@@ -4,17 +4,37 @@ import { loadLibraries, saveLibraries } from '../utils/libraryStorage';
 const Settings: React.FC = () => {
   const [livePreviewEnabled, setLivePreviewEnabled] = useState<boolean>(true);
 
+  const [linterEnabled, setLinterEnabled] = useState(true);
+
   useEffect(() => {
-    chrome.storage.local.get(['livePreview'], (data) => {
+    chrome.storage.local.get(['livePreview', 'linterEnabled'], (data) => {
       if (data.livePreview === undefined) {
-        // Set default value if it doesn't exist
         chrome.storage.local.set({ livePreview: true });
         setLivePreviewEnabled(true);
       } else {
         setLivePreviewEnabled(Boolean(data.livePreview));
       }
+  
+      if (data.linterEnabled === undefined) {
+        chrome.storage.local.set({ linterEnabled: true });
+        setLinterEnabled(true);
+      } else {
+        setLinterEnabled(Boolean(data.linterEnabled));
+      }
     });
   }, []);
+  
+  const handleTogglePreview = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const enabled = e.target.checked;
+    setLivePreviewEnabled(enabled);
+    chrome.storage.local.set({ livePreview: enabled });
+  };
+
+  const handleToggleLinter = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const enabled = e.target.checked;
+    setLinterEnabled(enabled);
+    chrome.storage.local.set({ linterEnabled: enabled });
+  };
 
   const handleDeleteAllLibraries = async () => {
     const confirmed = confirm('Are you sure you want to delete all libraries?');
@@ -22,13 +42,7 @@ const Settings: React.FC = () => {
       await saveLibraries({});
       alert('✅ All libraries deleted.');
     }
-  };
-
-  const handleTogglePreview = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const enabled = e.target.checked;
-    setLivePreviewEnabled(enabled);
-    chrome.storage.local.set({ livePreview: enabled });
-  };
+  };  
 
   return (
     <div className="settings-container">
@@ -41,6 +55,16 @@ const Settings: React.FC = () => {
           type="checkbox"
           checked={livePreviewEnabled}
           onChange={handleTogglePreview}
+        />
+      </div>
+
+      <div className="setting-item">
+        <label htmlFor="linter-toggle">Enable Linter</label>
+        <input
+          id="linter-toggle"
+          type="checkbox"
+          checked={linterEnabled}
+          onChange={handleToggleLinter}
         />
       </div>
 
