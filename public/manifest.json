@@ -11,7 +11,7 @@
   "content_scripts": [
       {
           "matches": ["https://edstem.org/*"],
-          "js": ["content.js"],
+          "js": ["window.js", "linter.js"],
           "run_at": "document_idle"
       }
   ],

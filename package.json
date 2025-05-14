@@ -5,7 +5,7 @@
   "main": "src/background/background.js",
   "scripts": {
     "build:popup": "esbuild src/popup/index.tsx --bundle --outfile=dist/popup.bundle.js --loader:.ts=ts --loader:.tsx=tsx --minify",
-    "build:content": "esbuild src/content/content.ts --bundle --outfile=dist/content.js --loader:.ts=ts --minify",
+    "build:content": "esbuild src/content/*.ts --bundle --outdir=dist --loader:.ts=ts --minify",
     "build:background": "esbuild src/background/background.ts --bundle --outfile=dist/background.js --loader:.ts=ts --minify",
     "copy:static": "node scripts/copyStatic.js",
 

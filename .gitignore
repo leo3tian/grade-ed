@@ -4,3 +4,5 @@ dist/
 *.DS_Store
 .vscode/
 legacy/
+dist.crx
+dist.pem
