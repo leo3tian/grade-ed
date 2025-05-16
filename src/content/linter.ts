@@ -12,14 +12,13 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === 'local' && 'linterEnabled' in changes) {
     LINTER_ENABLED = Boolean(changes.linterEnabled.newValue);
     console.log("⚙️ Linter enabled:", LINTER_ENABLED);
+    clearHighlights();
     if (LINTER_ENABLED) {
       waitForFeedbackCode((studentCode) => {
         console.log("📄 Extracted student code from Feedback tab:", studentCode);
         const deductions = runAllLintChecks(studentCode);
         highlightDeductions(deductions);
       });
-    } else {
-      clearHighlights();
     }
   }
 });
@@ -72,17 +71,7 @@ waitForFeedbackCode((studentCode) => {
 });
 
 function clearHighlights() {
-  document.querySelectorAll('.lint-highlight').forEach(el => el.remove());
-  document.querySelectorAll('.diff-text-line').forEach(el => {
-    (el as HTMLElement).style.backgroundColor = '';
-  });
-  document.querySelectorAll('.lint-tooltip').forEach(tip => tip.remove());
-
-  // Clone each line node to strip attached listeners
-  document.querySelectorAll('.diff-text-line').forEach(el => {
-    const clone = el.cloneNode(true);
-    el.parentNode?.replaceChild(clone, el);
-  });
+  document.querySelectorAll('.lint-highlight, .lint-tooltip').forEach(el => el.remove());
 }
 
 function highlightDeductions(deductions) {
@@ -94,34 +83,59 @@ function highlightDeductions(deductions) {
     const lineIndex = line - 1;
     const el = lineEls[lineIndex];
     if (el) {
-      (el as HTMLElement).style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
-
-      const tooltip = document.createElement('div');
-      tooltip.className = 'lint-tooltip';
-      tooltip.textContent = issue;
-      tooltip.style.position = 'absolute';
-      tooltip.style.background = '#fff';
-      tooltip.style.border = '1px solid #ccc';
-      tooltip.style.padding = '4px';
-      tooltip.style.fontSize = '12px';
-      tooltip.style.zIndex = '1000';
-      tooltip.style.display = 'none';
-
-      document.body.appendChild(tooltip);
-
-      el.addEventListener('mouseenter', () => {
-        const rect = el.getBoundingClientRect();
-        tooltip.style.top = rect.bottom + window.scrollY + 'px';
-        tooltip.style.left = rect.left + window.scrollX + 'px';
-        tooltip.style.display = 'block';
-      });
-
-      el.addEventListener('mouseleave', () => {
-        tooltip.style.display = 'none';
-      });
+      injectLintUI(el as HTMLElement, issue);
     }
   });
 }
+
+function injectLintUI(lineEl: HTMLElement, issue: string) {
+  // Add a relative positioning context
+  const el = lineEl.querySelector('.diff-text-line-code') as HTMLElement;
+  el.style.position = 'relative';
+
+  const highlight = document.createElement('div');
+  highlight.className = 'lint-highlight';
+  highlight.style.position = 'absolute';
+  highlight.style.top = '0';
+  highlight.style.left = '0';
+  highlight.style.width = '100%';
+  highlight.style.height = '100%';
+  highlight.style.backgroundColor = 'rgba(255, 72, 72, 0.2)';
+  highlight.style.pointerEvents = 'none';
+  highlight.style.zIndex = '0';
+  highlight.style.display = 'block'; // ✅ don't use flex or inline-block
+  highlight.style.margin = '0'; // ✅ ensure no added spacing
+
+  el.appendChild(highlight); // 👈 attach directly to the line element
+
+  const tooltip = document.createElement('div');
+  tooltip.className = 'lint-tooltip';
+  tooltip.textContent = issue;
+  tooltip.style.position = 'absolute';
+  tooltip.style.background = '#fff';
+  tooltip.style.border = '1px solid #ccc';
+  tooltip.style.padding = '4px';
+  tooltip.style.fontSize = '12px';
+  tooltip.style.display = 'none';
+  tooltip.style.pointerEvents = 'none';
+  tooltip.style.zIndex = '2';
+  
+
+  document.body.appendChild(tooltip);
+
+  el.addEventListener('mouseenter', () => {
+    const rect = el.getBoundingClientRect();
+    tooltip.style.top = `${rect.bottom + window.scrollY}px`;
+    tooltip.style.left = `${rect.left + window.scrollX}px`;
+    tooltip.style.display = 'block';
+  });
+
+  el.addEventListener('mouseleave', () => {
+    tooltip.style.display = 'none';
+  });
+}
+
+
 
 function runAllLintChecks(code: string): { line: number, issue: string }[] {
   const lines = code.split('\n');
