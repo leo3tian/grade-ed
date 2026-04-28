@@ -1,41 +1,79 @@
-console.log("🔮 Linter content script loaded");
+/*
+ * linter.ts — content script for Ed's Feedback tab.
+ *
+ * Loads user-defined rules from chrome.storage.local (seeded with sensible
+ * defaults on first run), runs them against each line of the diff view, and
+ * highlights flagged lines with hover tooltips.
+ */
+
+import { Rule } from '../popup/types';
+import {
+  DEFAULT_RULES,
+  isRule,
+  LineIssue,
+  lintCode,
+} from '../popup/utils/rules';
+
+console.log('🔮 Linter content script loaded');
 
 let LINTER_ENABLED = true;
+let RULES: Rule[] = [];
 let feedbackObserver: MutationObserver | null = null;
 
-// Load setting
-chrome.storage.local.get(['linterEnabled'], (data) => {
+async function initialLoad(): Promise<void> {
+  const data = await chrome.storage.local.get(['linterEnabled', 'linterRules']);
   LINTER_ENABLED = data.linterEnabled !== false;
-});
 
-// Listen for setting change
+  if (Array.isArray(data.linterRules)) {
+    RULES = data.linterRules.filter(isRule);
+  } else {
+    RULES = [...DEFAULT_RULES];
+    chrome.storage.local.set({ linterRules: RULES });
+  }
+
+  startLinting();
+}
+
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === 'local' && 'linterEnabled' in changes) {
+  if (areaName !== 'local') return;
+
+  let needsRelint = false;
+  if ('linterEnabled' in changes) {
     LINTER_ENABLED = Boolean(changes.linterEnabled.newValue);
-    console.log("⚙️ Linter enabled:", LINTER_ENABLED);
+    console.log('⚙️ Linter enabled:', LINTER_ENABLED);
+    needsRelint = true;
+  }
+  if ('linterRules' in changes) {
+    const next = changes.linterRules.newValue;
+    RULES = Array.isArray(next) ? next.filter(isRule) : [];
+    needsRelint = true;
+  }
 
+  if (needsRelint) {
     clearHighlights();
-
-    if (!LINTER_ENABLED && feedbackObserver) {
+    if (feedbackObserver) {
       feedbackObserver.disconnect();
       feedbackObserver = null;
     }
-
-    if (LINTER_ENABLED) {
-      waitForFeedbackCode((studentCode) => {
-        console.log("📄 Extracted student code from Feedback tab:", studentCode);
-        const deductions = runAllLintChecks(studentCode);
-        highlightDeductions(deductions);
-      });
-    }
+    startLinting();
   }
 });
 
+function startLinting(): void {
+  if (!LINTER_ENABLED) return;
+  waitForFeedbackCode((code) => {
+    const issues = lintCode(code, RULES);
+    highlightIssues(issues);
+  });
+}
+
 function getCodeFromDiffTable(): string {
   const rows = document.querySelectorAll('.diff-text-line');
-  const code = Array.from(rows).map(row => {
+  const code = Array.from(rows).map((row) => {
     const codeSpan = row.querySelector('.diff-text-line-code-words');
-    const lineNumber = (row.querySelector('.diff-text-line-num') as HTMLElement)?.innerText?.trim();
+    const lineNumber = (
+      row.querySelector('.diff-text-line-num') as HTMLElement | null
+    )?.innerText?.trim();
     const codeText = codeSpan ? (codeSpan as HTMLElement).innerText : '';
     return lineNumber ? `${lineNumber} ${codeText}` : codeText;
   });
@@ -58,9 +96,8 @@ function waitForFeedbackCode(callback: (code: string) => void): void {
 
   feedbackObserver = new MutationObserver(() => {
     if (!LINTER_ENABLED) return;
-
-    const lines = document.querySelectorAll('.diff-text-line');
-    if (lines.length > 0) {
+    const found = document.querySelectorAll('.diff-text-line');
+    if (found.length > 0) {
       feedbackObserver?.disconnect();
       feedbackObserver = null;
       callback(getCodeFromDiffTable());
@@ -69,77 +106,82 @@ function waitForFeedbackCode(callback: (code: string) => void): void {
 
   feedbackObserver.observe(document.body, {
     childList: true,
-    subtree: true
+    subtree: true,
   });
 }
-
-waitForFeedbackCode((studentCode) => {
-  console.log("📄 Extracted student code from Feedback tab:", studentCode);
-
-  if (!LINTER_ENABLED) {
-    console.log("🚫 Linter is disabled");
-    return;
-  }
-
-  const deductions = runAllLintChecks(studentCode);
-  highlightDeductions(deductions);
-});
 
 function clearHighlights(): void {
-  document.querySelectorAll('.lint-highlight, .lint-tooltip').forEach(el => el.remove());
+  document.querySelectorAll('.lint-highlight, .lint-tooltip').forEach((el) => el.remove());
 }
 
-function highlightDeductions(deductions: { line: number, issue: string }[]): void {
+function highlightIssues(issues: LineIssue[]): void {
   clearHighlights();
   const lineEls = document.querySelectorAll('.diff-text-line');
-
-  deductions.forEach(({ line, issue }) => {
-    const lineIndex = line - 1;
-    const el = lineEls[lineIndex];
-    if (el) {
-      injectLintUI(el as HTMLElement, issue);
-    }
-  });
+  for (const { line, messages } of issues) {
+    const el = lineEls[line - 1];
+    if (el) injectLintUI(el as HTMLElement, messages);
+  }
 }
 
-function injectLintUI(lineEl: HTMLElement, issue: string): void {
-  const el = lineEl.querySelector('.diff-text-line-code') as HTMLElement;
+function injectLintUI(lineEl: HTMLElement, messages: string[]): void {
+  const el = lineEl.querySelector('.diff-text-line-code') as HTMLElement | null;
   if (!el) return;
 
   el.style.position = 'relative';
 
   const highlight = document.createElement('div');
   highlight.className = 'lint-highlight';
-  highlight.style.position = 'absolute';
-  highlight.style.top = '0';
-  highlight.style.left = '0';
-  highlight.style.width = '100%';
-  highlight.style.height = '100%';
-  highlight.style.backgroundColor = 'rgba(255, 72, 72, 0.2)';
-  highlight.style.pointerEvents = 'none';
-  highlight.style.zIndex = '0';
-  highlight.style.display = 'block';
-  highlight.style.margin = '0';
-
+  Object.assign(highlight.style, {
+    position: 'absolute',
+    top: '0',
+    left: '0',
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(255, 72, 72, 0.2)',
+    pointerEvents: 'none',
+    zIndex: '0',
+    display: 'block',
+    margin: '0',
+  } as Partial<CSSStyleDeclaration>);
   el.appendChild(highlight);
 
   const tooltip = document.createElement('div');
   tooltip.className = 'lint-tooltip';
-  tooltip.textContent = issue;
-  tooltip.style.position = 'absolute';
-  tooltip.style.background = '#fff';
-  tooltip.style.border = '1px solid #ccc';
-  tooltip.style.padding = '4px';
-  tooltip.style.fontSize = '12px';
-  tooltip.style.display = 'none';
-  tooltip.style.pointerEvents = 'none';
-  tooltip.style.zIndex = '2';
+  // Multiple messages render as a small bullet list.
+  if (messages.length === 1) {
+    tooltip.textContent = messages[0];
+  } else {
+    const ul = document.createElement('ul');
+    ul.style.margin = '0';
+    ul.style.paddingLeft = '16px';
+    for (const m of messages) {
+      const li = document.createElement('li');
+      li.textContent = m;
+      ul.appendChild(li);
+    }
+    tooltip.appendChild(ul);
+  }
+  Object.assign(tooltip.style, {
+    position: 'absolute',
+    background: '#fff',
+    border: '1px solid #ccc',
+    borderRadius: '4px',
+    padding: '6px 8px',
+    fontSize: '12px',
+    lineHeight: '1.4',
+    color: '#333',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+    display: 'none',
+    pointerEvents: 'none',
+    zIndex: '2',
+    maxWidth: '320px',
+  } as Partial<CSSStyleDeclaration>);
 
   document.body.appendChild(tooltip);
 
   el.addEventListener('mouseenter', () => {
     const rect = el.getBoundingClientRect();
-    tooltip.style.top = `${rect.bottom + window.scrollY}px`;
+    tooltip.style.top = `${rect.bottom + window.scrollY + 2}px`;
     tooltip.style.left = `${rect.left + window.scrollX}px`;
     tooltip.style.display = 'block';
   });
@@ -149,30 +191,4 @@ function injectLintUI(lineEl: HTMLElement, issue: string): void {
   });
 }
 
-function runAllLintChecks(code: string): { line: number, issue: string }[] {
-  const lines = code.split('\n');
-  const issues: { line: number, issue: string }[] = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const content = lines[i].replace(/^\d+\s+/, '');
-    const lineNum = i + 1;
-
-    const checks = [longLineCheck, breakCheck];
-    for (const check of checks) {
-      const issue = check(content);
-      if (issue) {
-        issues.push({ line: lineNum, issue });
-      }
-    }
-  }
-
-  return issues;
-}
-
-function longLineCheck(line: string): string | null {
-  return line.length > 100 ? `Line exceeds 100 characters (${line.length}).` : null;
-}
-
-function breakCheck(line: string): string | null {
-  return /\bbreak\b/.test(line) ? `Use of 'break' detected.` : null;
-}
+initialLoad().catch((err) => console.error('Linter init failed:', err));

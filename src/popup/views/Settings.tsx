@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { View } from '../types';
 import { saveLibraries } from '../utils/libraryStorage';
 
-const Settings: React.FC = () => {
+type SettingsProps = {
+  navigate: (view: View) => void;
+};
+
+const Settings: React.FC<SettingsProps> = ({ navigate }) => {
   const [livePreviewEnabled, setLivePreviewEnabled] = useState<boolean>(true);
   const [linterEnabled, setLinterEnabled] = useState(true);
 
@@ -36,7 +41,9 @@ const Settings: React.FC = () => {
   };
 
   const handleDeleteAllLibraries = async () => {
-    const confirmed = confirm('Are you sure you want to delete all libraries? This cannot be undone.');
+    const confirmed = confirm(
+      'Are you sure you want to delete all libraries? This cannot be undone.',
+    );
     if (confirmed) {
       await saveLibraries({});
       alert('✅ All libraries deleted.');
@@ -84,6 +91,21 @@ const Settings: React.FC = () => {
             />
             <span className="slider" />
           </label>
+        </div>
+
+        <div className="setting-item">
+          <div className="setting-label-block">
+            <label>Manage Linter Rules</label>
+            <span className="setting-description">
+              Add, edit, or remove the rules the linter checks each line against.
+            </span>
+          </div>
+          <button
+            className="secondary-button"
+            onClick={() => navigate({ name: 'rules' })}
+          >
+            📏 Open
+          </button>
         </div>
       </div>
 
