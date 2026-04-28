@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import '../../public/popup.css';
 import { View } from './types';
 import Header from './components/Header';
 import LibraryDetail from './views/LibraryDetail';

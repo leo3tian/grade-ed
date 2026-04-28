@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Library } from '../types';
 import { updateLibrary, deleteLibrary } from '../utils/libraryStorage';
 
@@ -11,9 +11,20 @@ type LibraryItemProps = {
 
 const LibraryItem: React.FC<LibraryItemProps> = ({ library, onClick, onRefresh, onEdit }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleToggleEnabled = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation();
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClickAway = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickAway);
+    return () => document.removeEventListener('mousedown', handleClickAway);
+  }, [menuOpen]);
+
+  const handleToggleEnabled = async () => {
     await updateLibrary(library.name, { enabled: !library.enabled });
     onRefresh();
   };
@@ -21,39 +32,66 @@ const LibraryItem: React.FC<LibraryItemProps> = ({ library, onClick, onRefresh, 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
     await deleteLibrary(library.name);
-    onRefresh()
+    onRefresh();
   };
 
-  return (
-    <div className="library-card" onClick={onClick}>
-      <div className="library-card-header">
-        <input
-          type="checkbox"
-          checked={library.enabled}
-          onClick={(e) => e.stopPropagation()}
-          onChange={(e) => handleToggleEnabled(e)}
-        />
-        <div className="library-menu-trigger" onClick={(e) => {
-          e.stopPropagation();
-          setMenuOpen((prev) => !prev);
-        }}>
-          ⋮
-        </div>
+  const deductionCount = library.deductions.length;
 
-        {menuOpen && (
-          <div className="library-menu">
-            <div onClick={(e) => {
-                e.stopPropagation();
-                onEdit(library);
-            }}>✏️ Edit</div>
-            <div onClick={handleDelete}>🗑️ Delete</div>
-          </div>
-        )}
+  return (
+    <div
+      className={`library-card ${library.enabled ? '' : 'disabled'}`}
+      onClick={onClick}
+    >
+      <div className="library-card-header">
+        <label className="toggle" onClick={(e) => e.stopPropagation()} title={library.enabled ? 'Enabled' : 'Disabled'}>
+          <input
+            type="checkbox"
+            checked={library.enabled}
+            onChange={handleToggleEnabled}
+            aria-label={`Toggle ${library.name}`}
+          />
+          <span className="slider" />
+        </label>
+
+        <div
+          ref={menuRef}
+          className="library-menu-trigger"
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenuOpen((prev) => !prev);
+          }}
+          title="More"
+          aria-label="More actions"
+        >
+          ⋮
+          {menuOpen && (
+            <div className="library-menu" onClick={(e) => e.stopPropagation()}>
+              <div
+                className="library-menu-item"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen(false);
+                  onEdit(library);
+                }}
+              >
+                ✏️ Edit
+              </div>
+              <div className="library-menu-item danger" onClick={handleDelete}>
+                🗑️ Delete
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="library-card-body">
         <div className="library-title">{library.name}</div>
-        <div className="library-description">{library.description || "No description."}</div>
+        <div className="library-description">
+          {library.description || 'No description.'}
+        </div>
+        <div className="library-meta">
+          📌 {deductionCount} {deductionCount === 1 ? 'deduction' : 'deductions'}
+        </div>
       </div>
     </div>
   );

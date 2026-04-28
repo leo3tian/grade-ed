@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { loadLibraries, saveLibraries } from '../utils/libraryStorage';
+import { saveLibraries } from '../utils/libraryStorage';
 
 const Settings: React.FC = () => {
   const [livePreviewEnabled, setLivePreviewEnabled] = useState<boolean>(true);
-
   const [linterEnabled, setLinterEnabled] = useState(true);
 
   useEffect(() => {
@@ -14,7 +13,7 @@ const Settings: React.FC = () => {
       } else {
         setLivePreviewEnabled(Boolean(data.livePreview));
       }
-  
+
       if (data.linterEnabled === undefined) {
         chrome.storage.local.set({ linterEnabled: true });
         setLinterEnabled(true);
@@ -23,7 +22,7 @@ const Settings: React.FC = () => {
       }
     });
   }, []);
-  
+
   const handleTogglePreview = (e: React.ChangeEvent<HTMLInputElement>) => {
     const enabled = e.target.checked;
     setLivePreviewEnabled(enabled);
@@ -37,41 +36,71 @@ const Settings: React.FC = () => {
   };
 
   const handleDeleteAllLibraries = async () => {
-    const confirmed = confirm('Are you sure you want to delete all libraries?');
+    const confirmed = confirm('Are you sure you want to delete all libraries? This cannot be undone.');
     if (confirmed) {
       await saveLibraries({});
       alert('✅ All libraries deleted.');
     }
-  };  
+  };
 
   return (
     <div className="settings-container">
-      <h2>Settings</h2>
+      <h2>⚙️ Settings</h2>
 
-      <div className="setting-item">
-        <label htmlFor="preview-toggle">Live Markdown Preview on Hover</label>
-        <input
-          id="preview-toggle"
-          type="checkbox"
-          checked={livePreviewEnabled}
-          onChange={handleTogglePreview}
-        />
+      <div className="settings-section">
+        <div className="settings-section-title">Behavior</div>
+
+        <div className="setting-item">
+          <div className="setting-label-block">
+            <label htmlFor="preview-toggle">Live Markdown Preview</label>
+            <span className="setting-description">
+              Show a rendered preview of a deduction when hovering over it in Ed.
+            </span>
+          </div>
+          <label className="toggle">
+            <input
+              id="preview-toggle"
+              type="checkbox"
+              checked={livePreviewEnabled}
+              onChange={handleTogglePreview}
+            />
+            <span className="slider" />
+          </label>
+        </div>
+
+        <div className="setting-item">
+          <div className="setting-label-block">
+            <label htmlFor="linter-toggle">Enable Linter</label>
+            <span className="setting-description">
+              Highlight problematic lines in the Feedback tab's diff view.
+            </span>
+          </div>
+          <label className="toggle">
+            <input
+              id="linter-toggle"
+              type="checkbox"
+              checked={linterEnabled}
+              onChange={handleToggleLinter}
+            />
+            <span className="slider" />
+          </label>
+        </div>
       </div>
 
-      <div className="setting-item">
-        <label htmlFor="linter-toggle">Enable Linter</label>
-        <input
-          id="linter-toggle"
-          type="checkbox"
-          checked={linterEnabled}
-          onChange={handleToggleLinter}
-        />
-      </div>
+      <div className="settings-section">
+        <div className="settings-section-title">Danger zone</div>
 
-      <div className="setting-item">
-        <button className="secondary-button" onClick={handleDeleteAllLibraries}>
-          Delete All Libraries
-        </button>
+        <div className="setting-item">
+          <div className="setting-label-block">
+            <label>Delete all libraries</label>
+            <span className="setting-description">
+              Permanently remove every saved library and all of its deductions.
+            </span>
+          </div>
+          <button className="danger-button" onClick={handleDeleteAllLibraries}>
+            🗑️ Delete all
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -35,52 +35,78 @@ const LibraryDetail: React.FC<{ libraryName: string; goBack: () => void }> = ({ 
     setLibrary(updatedLibraries[updated.name]);
   };
 
-  const filteredDeductions = library?.deductions.filter(text =>
-    text.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredDeductions = library?.deductions
+    .map((markdown, originalIndex) => ({ markdown, originalIndex }))
+    .filter(({ markdown }) =>
+      markdown.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
-  if (!library) return <div>Loading...</div>;
+  if (!library) {
+    return (
+      <div className="empty-state">
+        <div className="empty-icon">⏳</div>
+        <div className="empty-title">Loading…</div>
+      </div>
+    );
+  }
+
+  const totalCount = library.deductions.length;
 
   return (
     <>
       <div className="details-header-bar">
-        <div className="header-title" title={library.name}>
-          Editing {library.name}
+        <div className="details-title">
+          <div className="details-title-eyebrow">Editing library</div>
+          <div className="details-title-name" title={library.name}>{library.name}</div>
         </div>
-        <button className="secondary-button" onClick={goBack}>Back</button>
+        <button className="secondary-button" onClick={goBack}>← Back</button>
       </div>
-
 
       <div className="editor-toolbar">
-        <textarea ref={inputRef} className="library-textarea" placeholder="Enter markdown..." />
-        <button className="primary-button" onClick={handleAdd}>Add Deduction</button>
+        <textarea
+          ref={inputRef}
+          className="library-textarea"
+          placeholder="Enter markdown for a new deduction…"
+        />
+        <button className="primary-button" onClick={handleAdd}>
+          ➕ Add Deduction
+        </button>
       </div>
 
-      
-
-      <div className="header-title">Loaded Deductions</div>
+      <div className="section-header">
+        <span>Deductions</span>
+        <span className="section-count">{totalCount}</span>
+      </div>
 
       <input
         className="deduction-search"
         type="text"
-        placeholder="Search deductions..."
+        placeholder="🔍 Search deductions…"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
 
       <div className="deduction-list">
-        {filteredDeductions.map((markdown, index) => {
-          const headerText = markdown.split('\n')[0].replaceAll('**', '');
-          return (
-            <DeductionItem
-              key={index}
-              index={index}
-              title={headerText}
-              body={markdown}
-              onDelete={handleRemove}
-            />
-          );
-        })}
+        {filteredDeductions.length === 0 ? (
+          <div className="deduction-empty">
+            {totalCount === 0
+              ? 'No deductions yet — add one above to get started.'
+              : 'No deductions match your search.'}
+          </div>
+        ) : (
+          filteredDeductions.map(({ markdown, originalIndex }) => {
+            const headerText = markdown.split('\n')[0].replaceAll('**', '');
+            return (
+              <DeductionItem
+                key={originalIndex}
+                index={originalIndex}
+                title={headerText}
+                body={markdown}
+                onDelete={handleRemove}
+              />
+            );
+          })
+        )}
       </div>
     </>
   );

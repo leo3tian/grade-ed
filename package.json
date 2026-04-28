@@ -2,21 +2,11 @@
   "name": "grade-ed",
   "version": "1.0.0",
   "description": "A Chrome extension to simplify grading on EdStem.",
-  "main": "src/background/background.js",
   "scripts": {
-    "build:popup": "esbuild src/popup/index.tsx --bundle --outfile=dist/popup.bundle.js --loader:.ts=ts --loader:.tsx=tsx --minify",
-    "build:content": "esbuild src/content/*.ts --bundle --outdir=dist --loader:.ts=ts --minify",
-    "build:background": "esbuild src/background/background.ts --bundle --outfile=dist/background.js --loader:.ts=ts --minify",
-    "copy:static": "node scripts/copyStatic.js",
-
-    "watch:popup": "esbuild src/popup/index.tsx --bundle --outfile=dist/popup.bundle.js --loader:.ts=ts --loader:.tsx=tsx --watch",
-    "watch:content": "esbuild src/content/content.ts --bundle --outfile=dist/content.js --loader:.ts=ts --watch",
-    "watch:background": "esbuild src/background/background.ts --bundle --outfile=dist/background.js --loader:.ts=ts --watch",
-
-    "dev": "npm-run-all --parallel watch:* copy:static",
-    "build": "npm run build:popup && npm run build:content && npm run build:background && npm run copy:static"
+    "dev": "node scripts/build.mjs --watch",
+    "build": "node scripts/build.mjs",
+    "clean": "rm -rf dist"
   },
-
   "keywords": [],
   "author": "Your Name",
   "license": "MIT",
@@ -24,9 +14,7 @@
     "@types/chrome": "^0.0.315",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
-    "cpy": "^11.1.0",
     "esbuild": "^0.25.2",
-    "npm-run-all": "^4.1.5",
     "typescript": "^5.3.3"
   },
   "dependencies": {

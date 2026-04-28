@@ -110,15 +110,9 @@ export async function importLibraries(imported: { [name: string]: Library }): Pr
     if (!confirmOverwrite) return { success: false };
   }
 
-  for (const [key, lib] of Object.entries(imported)) {
-    if (!conflicts.includes(key)) {
-      // Add non-conflicting libraries
-      updatedLibraries[key] = lib;
-    } else {
-      // Only add conflicting ones if confirmed
-      updatedLibraries[key] = lib;
-    }
-  }
+  // At this point conflicts have been confirmed (or there were none),
+  // so every imported library is safe to write through.
+  Object.assign(updatedLibraries, imported);
 
   await saveLibraries(updatedLibraries);
   return { success: true };

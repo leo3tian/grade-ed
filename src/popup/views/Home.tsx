@@ -4,7 +4,6 @@ import LibraryItem from '../components/LibraryItem';
 import LibraryModal from '../components/LibraryModal';
 import {
   isLibrary,
-  willOverwriteLibrary,
   loadLibraries,
   saveLibraries,
   importLibraries,
@@ -69,25 +68,25 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
   const handleImportLibraries = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-  
+
     // Delay to avoid macOS popup auto-closing bug
     setTimeout(() => {
       const reader = new FileReader();
       reader.onload = async () => {
         try {
           const imported = JSON.parse(reader.result as string);
-  
+
           if (typeof imported !== 'object' || imported === null) {
             alert('Invalid file format.');
             return;
           }
-  
+
           const isValid = Object.values(imported).every((lib) => isLibrary(lib));
           if (!isValid) {
             alert('Invalid library structure.');
             return;
           }
-  
+
           const { success } = await importLibraries(imported);
           if (success) {
             await refreshLibraries();
@@ -98,9 +97,8 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
         }
       };
       reader.readAsText(file);
-    }, 150); // delay slightly to let popup regain focus
+    }, 150);
   };
-  
 
   const handleSaveLibrary = async (updates: Partial<Library>) => {
     if (!updates.name) return;
@@ -124,6 +122,8 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
     setLibraries(updatedLibraries);
   };
 
+  const hasLibraries = Object.keys(libraries).length > 0;
+
   return (
     <div className="library-home">
       <div className="button-row">
@@ -134,45 +134,53 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
             setShowModal(true);
           }}
         >
-          + New Library
+          ➕ New Library
         </button>
-        <button className="secondary-button" onClick={() => importInputRef.current?.click()}>
-          Import
+        <button
+          className="secondary-button"
+          onClick={() => importInputRef.current?.click()}
+          title="Import libraries from JSON"
+        >
+          📥 Import
         </button>
-        <button className="secondary-button" onClick={handleExportLibraries}>
-          Export
+        <button
+          className="secondary-button"
+          onClick={handleExportLibraries}
+          title="Export all libraries as JSON"
+        >
+          📤 Export
         </button>
         <input
           type="file"
+          accept="application/json"
           ref={importInputRef}
           style={{ display: 'none' }}
           onChange={handleImportLibraries}
         />
       </div>
 
-      <div className="library-grid">
-        {Object.entries(libraries).map(([key, lib]) => (
-          <LibraryItem
-            key={lib.name}
-            library={lib}
-            onClick={() => handleOpenLibrary(lib.name)}
-            onEdit={(library) => {
-              setEditingLibrary(library);
-              setShowModal(true);
-            }}
-            onRefresh={refreshLibraries}
-          />
-        ))}
-      </div>
-
-      {Object.keys(libraries).length === 0 && (
-        <div className="empty-state">
-            <div className="empty-icon">📚</div>
-            <div className="empty-title">No libraries yet</div>
-            <div className="empty-subtitle">Click "+ New Library" to get started!</div>
+      {hasLibraries ? (
+        <div className="library-grid">
+          {Object.entries(libraries).map(([_, lib]) => (
+            <LibraryItem
+              key={lib.name}
+              library={lib}
+              onClick={() => handleOpenLibrary(lib.name)}
+              onEdit={(library) => {
+                setEditingLibrary(library);
+                setShowModal(true);
+              }}
+              onRefresh={refreshLibraries}
+            />
+          ))}
         </div>
-        )}  
-
+      ) : (
+        <div className="empty-state">
+          <div className="empty-icon">📚</div>
+          <div className="empty-title">No libraries yet</div>
+          <div className="empty-subtitle">Click "➕ New Library" to get started!</div>
+        </div>
+      )}
 
       {showModal && editingLibrary && (
         <LibraryModal

@@ -52,7 +52,7 @@ function simulatePaste(containerEl, markdown) {
         cancelable: true
       });
 
-      const result = paragraph.dispatchEvent(pasteEvent);
+      paragraph.dispatchEvent(pasteEvent);
     }, 100);
   });
 }
@@ -139,32 +139,45 @@ function setupDeductionsMenu(containerEl) {
   updateMenu();
 }
 
+// Renders a markdown preview that visually replaces the live paragraph node.
+// The ghost is anchored to the paragraph's own rect (not its parent's) so the
+// first character lines up with where the cursor would be, and it inherits the
+// paragraph's typography so wrapping/line-height are identical.
 function showGhostPreview(targetEl: HTMLElement, content: string) {
-  // Remove any existing preview
   removeGhostPreview();
+
+  const container = targetEl.parentElement;
+  if (!container) return;
 
   const ghost = document.createElement('div');
   ghost.className = 'am-theme-light ghost';
+  ghost.innerHTML = marked.parse(content) as string;
 
-  // Parse as markdown
-  ghost.innerHTML = marked.parse(content) as string; 
+  const targetRect = targetEl.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
+  const targetStyle = window.getComputedStyle(targetEl);
+  const containerStyle = window.getComputedStyle(container);
+  const padBottom = parseFloat(containerStyle.paddingBottom) || 0;
 
-  // Match size/position of paragraphNode
-  const padding: number = 5;
-  const rect = targetEl.parentElement.getBoundingClientRect();
-  ghost.style.position = 'absolute';
-  ghost.style.top = `${rect.top + window.scrollY + padding}px`;
-  ghost.style.left = `${rect.left + window.scrollX + padding}px`;
-  ghost.style.width = `${rect.width - padding}px`;
-  ghost.style.height = `${rect.height - padding}px`;
-  ghost.style.overflow = 'hidden';
+  // Anchor to where the paragraph's text actually starts.
+  ghost.style.top = `${targetRect.top + window.scrollY}px`;
+  ghost.style.left = `${targetRect.left + window.scrollX}px`;
+  ghost.style.width = `${targetRect.width}px`;
+  // Allow the preview to grow downward, but never past the editor's bottom.
+  ghost.style.maxHeight = `${Math.max(targetRect.height, containerRect.bottom - padBottom - targetRect.top)}px`;
+
+  // Inherit typography so wrapping matches the live editor exactly.
+  ghost.style.fontFamily = targetStyle.fontFamily;
+  ghost.style.fontSize = targetStyle.fontSize;
+  ghost.style.fontWeight = targetStyle.fontWeight;
+  ghost.style.lineHeight = targetStyle.lineHeight;
+  ghost.style.color = targetStyle.color;
+  ghost.style.letterSpacing = targetStyle.letterSpacing;
 
   document.body.appendChild(ghost);
 
   const scrollContainer = targetEl.closest('.ffview-scroll');
-
-  scrollContainer.addEventListener('scroll', removeGhostPreview, { once: true });
-  // window.addEventListener('click', removeGhostPreview, { once: true });
+  scrollContainer?.addEventListener('scroll', removeGhostPreview, { once: true });
 }
 
 function removeGhostPreview() {
@@ -238,8 +251,68 @@ style.textContent = `
     width: 100%;
   }
 
+/* Markdown hover preview — overlaid on top of the live paragraph node. */
 .ghost {
+  position: absolute;
   background: white;
+  box-sizing: border-box;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 999;
+  border-radius: 2px;
+  margin: 0;
+  padding: 0;
+  animation: ghost-fade 80ms ease-out;
+}
+@keyframes ghost-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+/* Reset block margins so marked's output starts at exactly the same y as
+   the paragraph's first character. */
+.ghost > *:first-child { margin-top: 0; }
+.ghost > *:last-child  { margin-bottom: 0; }
+.ghost p {
+  margin: 0 0 0.5em;
+}
+.ghost h1, .ghost h2, .ghost h3, .ghost h4, .ghost h5, .ghost h6 {
+  margin: 0.4em 0 0.25em;
+  line-height: 1.25;
+}
+.ghost ul, .ghost ol {
+  margin: 0.25em 0;
+  padding-left: 1.5em;
+}
+.ghost li { margin: 0.1em 0; }
+.ghost code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.92em;
+}
+.ghost pre {
+  background: #f6f6f6;
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin: 0.4em 0;
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.ghost pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.95em;
+}
+.ghost blockquote {
+  margin: 0.4em 0;
+  padding: 0 0 0 10px;
+  border-left: 3px solid #ddd;
+  color: #555;
+}
+.ghost a {
+  color: #562C87;
+  text-decoration: underline;
 }
 
 .menu-item.no-results {

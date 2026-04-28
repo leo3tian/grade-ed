@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Library } from '../types';
 
-// Props for the modal
 type LibraryModalProps = {
   initialLibrary: Partial<Library>;
   onSave: (updates: Partial<Library>) => void;
   onCancel: () => void;
-}
+};
 
 const LibraryModal: React.FC<LibraryModalProps> = ({ initialLibrary, onSave, onCancel }) => {
   const [name, setName] = useState(initialLibrary.name || '');
@@ -30,18 +29,26 @@ const LibraryModal: React.FC<LibraryModalProps> = ({ initialLibrary, onSave, onC
     });
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') onCancel();
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSave();
+  };
+
+  const isEditing = Boolean(initialLibrary.name);
+
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <h2>{initialLibrary.name ? 'Edit Library' : 'Create New Library'}</h2>
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} onKeyDown={handleKeyDown}>
+        <h2>{isEditing ? '✏️ Edit Library' : '✨ Create New Library'}</h2>
 
         <div className="modal-field">
           <label>Name</label>
           <input
             type="text"
             value={name}
+            autoFocus
             onChange={(e) => setName(e.target.value)}
-            placeholder="Library Name"
+            placeholder="e.g. Recursion deductions"
           />
         </div>
 
@@ -50,13 +57,15 @@ const LibraryModal: React.FC<LibraryModalProps> = ({ initialLibrary, onSave, onC
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Library Description"
+            placeholder="Optional — what is this library for?"
           />
         </div>
 
         <div className="modal-actions">
           <button className="secondary-button" onClick={onCancel}>Cancel</button>
-          <button className="primary-button" onClick={handleSave}>Save</button>
+          <button className="primary-button" onClick={handleSave}>
+            {isEditing ? '💾 Save' : '✨ Create'}
+          </button>
         </div>
       </div>
     </div>
